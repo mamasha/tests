@@ -43,7 +43,7 @@ namespace ThumbnailSrv
             var response = _request.Http.Response;
 
             if (data.Error != null)
-                _log.info(_request.TrackingId, "anyhandler", data.Error);
+                _log.error(_request.TrackingId, "anyhandler", data.Error);
 
             if (userError)
             {

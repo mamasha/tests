@@ -77,16 +77,19 @@ namespace ThumbnailSrv
         {
             var config = _config;
             var http = request.Http.Request;
+            var trackingId = request.TrackingId;
 
             var url = http.Require("url");
             var width = http.OptionalInt("width", config.thumbnail.defaultWidth);
             var height = http.OptionalInt("height", config.thumbnail.defaultHeight);
 
-            _log.info(request.TrackingId, () => $"thumbnail request for '{url}' width={width} height={height}");
+            _log.info(trackingId, () => $"thumbnail request for '{url}' width={width} height={height}");
 
             if (url != "http://thumbnail.src/test.jpg")
             {
-                var bytes = _helpers.TextToImage($"404 - '{url}' is not found", width, height);
+                var errMsg = $"{trackingId} - '{url}' is not found";
+                var bytes = _helpers.TextToImage(width, height, errMsg);
+                _log.error(trackingId, errMsg);
                 request.EndWith(bytes);
                 return;
             }

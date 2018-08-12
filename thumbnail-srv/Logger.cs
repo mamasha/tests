@@ -7,7 +7,8 @@ namespace ThumbnailSrv
     interface ILogger
     {
         void info(string trackingId, string topic, Func<string> getMsg, Func<object> getDetails = null);
-        void info(string trackingId, string topic, Exception error, Func<string> getMsg = null, Func<object> getDetails = null);
+        void error(string trackingId, string topic, Exception error, Func<string> getMsg = null, Func<object> getDetails = null);
+        void error(string trackingId, string topic, string errMsg, Func<object> getDetails = null);
         object Dump();
     }
 
@@ -27,6 +28,7 @@ namespace ThumbnailSrv
 
         struct Item
         {
+            public string Severity { get; set; }
             public string TrackingId { get; set; }
             public string Topic { get; set; }
             public string Msg { get; set; }
@@ -72,7 +74,7 @@ namespace ThumbnailSrv
             var msg = item.Msg ?? item.Error?.Message ?? "n/a";
 
             return new {
-                Msg = $"{item.TrackingId} {item.Topic} {msg}",
+                Msg = $"{item.Severity} {item.TrackingId} {item.Topic} {msg}",
                 Error = item.Error?.Message,
                 Stack = item.Error?.StackTrace,
                 Details = item.Details
@@ -117,6 +119,7 @@ namespace ThumbnailSrv
             }
 
             var item = new Item {
+                Severity = "I",
                 TrackingId = trackingId,
                 Topic = topic,
                 Msg = msg,
@@ -129,7 +132,7 @@ namespace ThumbnailSrv
             }
         }
 
-        void ILogger.info(string trackingId, string topic, Exception error, Func<string> getMsg, Func<object> getDetails)
+        void ILogger.error(string trackingId, string topic, Exception error, Func<string> getMsg, Func<object> getDetails)
         {
             string msg = null;
             object details = null;
@@ -148,11 +151,41 @@ namespace ThumbnailSrv
             }
 
             var item = new Item {
+                Severity = "E",
                 TrackingId = trackingId,
                 Topic = topic,
                 Msg = msg,
                 Details = details, 
                 Error = error
+            };
+
+            lock (this)
+            {
+                enqueue(item);
+            }
+        }
+
+        void ILogger.error(string trackingId, string topic, string errMsg, Func<object> getDetails)
+        {
+            object details = null;
+
+            try
+            {
+                if (getDetails != null)
+                    details = getDetails();
+            }
+            catch
+            {
+                // nothing to do here
+            }
+
+            var item = new Item
+            {
+                Severity = "E",
+                TrackingId = trackingId,
+                Topic = topic,
+                Msg = errMsg,
+                Details = details
             };
 
             lock (this)

@@ -6,7 +6,7 @@ namespace ThumbnailSrv
 {
     interface IImageUtilities
     {
-        byte[] TextToImage(string text, int width, int height);
+        byte[] TextToImage(int width, int height, string text);
     }
 
     class ImageUtilities : IImageUtilities
@@ -26,7 +26,7 @@ namespace ThumbnailSrv
 
         #region interface
 
-        byte[] IImageUtilities.TextToImage(string text, int width, int height)
+        byte[] IImageUtilities.TextToImage(int width, int height, string text)
         {
             var img = new Bitmap(width, height);
             var drawing = Graphics.FromImage(img);
