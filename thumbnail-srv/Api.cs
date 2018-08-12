@@ -57,6 +57,28 @@ namespace ThumbnailSrv
             _log.info(request.TrackingId, getMsg, getDetails);
         }
 
+        private void thumbnailFlow()
+        {
+            // get resource
+            var ttt = _cache.Get(url);
+
+            switch (ttt.What)
+            {
+                case "new":
+                    _cache.Resolve(url, _web.StartDownload());
+                    next("ready");
+                    break;
+
+                case "pending":
+                    next("ready");
+                    break;
+
+                case "ready":
+                    break;
+            }
+
+        }
+
         #endregion
 
         #region interface
