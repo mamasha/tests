@@ -6,103 +6,115 @@ using System.Web;
 
 namespace ThumbnailSrv
 {
-    public class AnyHandler : IHttpAsyncHandler, IAsyncResult
+    interface IAnyHandler
+    {
+        void WriteResponse(AnyResponse data);
+        void NotifyCompletion();
+    }
+
+    public class AnyHandler : IHttpAsyncHandler, IAsyncResult, IAnyHandler
     {
         #region members
 
+        private ILogger _log;
+        private AsyncCallback _notifyCompletion;
         private bool _isCompleted;
-        private AnyRequest _my;
+        private ISrvRequest _request;
 
         #endregion
 
         #region private
 
-        private void logStart(AnyRequest my)
+        private void logStart(ISrvRequest request)
         {
         }
 
-        private void logEnd(AnyRequest my)
+        private void logEnd(ISrvRequest request)
         {
         }
 
-        private void writeResponse(AnyRequest my)
+        private void writeResponse(AnyResponse data)
         {
-            var internalError = my.InternalError != null;
-            var userError = my.UserError != null;
-            var responseIsData = my.Json != null;
-            var responseIsImage = my.Image != null;
+            var userError = data.Error is ApplicationException;
+            var responseIsData = data.Json != null;
+            var responseIsImage = data.Image != null;
+            var trackingId = _request.TrackingId;
 
-            var response = my.Http.Response;
+            var response = _request.Http.Response;
 
-            if (internalError)
-            {
-                response.ContentType = "application/json";
-                response.StatusCode = 500;
-                var data = new {
-                    Error = $"Oops... Something went wrong ({my.InternalError.Message})"
-                };
-                response.Write(data.ToJson());
-                return;
-            }
+            if (data.Error != null)
+                _log.info(_request.TrackingId, "anyhandler", data.Error);
 
             if (userError)
             {
                 response.ContentType = "application/json";
                 response.StatusCode = 400;
-                var data = new {
-                    Error = my.UserError
+                var d = new {
+                    Error = $"{data.Error.Message} (trackingId='{trackingId}')"
                 };
-                response.Write(data.ToJson());
+                response.Write(d.ToJson());
                 return;
             }
 
             if (responseIsData)
             {
                 response.ContentType = "application/json";
-                response.StatusCode = 400;
-                response.Write(my.Json);
+                response.Write(data.Json);
                 return;
             }
 
             if (responseIsImage)
             {
                 response.ContentType = "image/png";
-                response.BinaryWrite(my.Image);
+                response.BinaryWrite(data.Image);
                 return;
             }
 
+            // internal error and fallback
+
             response.ContentType = "application/json";
             response.StatusCode = 500;
-            var error = new {
-                Error = "Oops... Something went wrong (no data in respnse)"
+            var err = new {
+                Error = $"Oops... Something went wrong (trackingId='{trackingId}')"
             };
-            response.Write(error.ToJson());
+
+            response.Write(err.ToJson());
         }
 
-        private void startRequest(AnyRequest my)
+        private void startRequest(ISrvRequest request)
         {
-            var http = my.Http.Request;
+            var http = request.Http.Request;
+            var api = Api.Instance;
 
-            switch (my.Route)
+            switch (request.Route)
             {
                 case "/thumbnail": {
-                    var url = http.Require("url");
-                    var width = http.RequireInt("width");
-                    var height = http.RequireInt("height");
-                    Api.Instance.Thumbnail(my, url, width, height);
+                    api.Thumbnail(request);
+                    break;
+                }
+                case "/config": {
+                    var config = http.RequireArgs<SrvConfig>();
+                    api.SetConfig(config);
+                    writeResponse(new AnyResponse { Json = config.ToJson() });
+                    endRequest();
+                    break;
+                }
+                case "/log": {
+                    var dump = Logger.Instance.Dump();
+                    writeResponse(new AnyResponse { Json = dump.ToJson() });
+                    endRequest();
                     break;
                 }
                 default: {
-                    throw new ApplicationException($"Route '{my.Route}' is not found");
+                    throw new ApplicationException($"Route '{request.Route}' is not found");
                 }
             }
         }
 
-        private void endRequest(AnyRequest my, AsyncCallback notifyCompletion)
+        private void endRequest()
         {
-            writeResponse(my);
             _isCompleted = true;
-            notifyCompletion(this);
+            _notifyCompletion(this);
         }
 
         #endregion
@@ -118,33 +130,26 @@ namespace ThumbnailSrv
 
         IAsyncResult IHttpAsyncHandler.BeginProcessRequest(HttpContext http, AsyncCallback cb, object extraData)
         {
-            var request = http.Request;
+            _log = Logger.Instance;
+            _notifyCompletion = cb;
+
             var response = http.Response;
-            var route = request.FilePath.ToLowerInvariant();
+            var route = http.Request.FilePath.ToLowerInvariant();
 
-            _my = new AnyRequest {
-                Http = http,
-                NotifyCompletion = () => endRequest(_my, cb),
-                Route = route
-            };
+            _request = SrvRequest.New(http, route, this);
 
-            logStart(_my);
+            logStart(_request);
 
             response.Headers.Set("Access-Control-Allow-Origin", "*");
 
             try
             {
-                startRequest(_my);
-            }
-            catch (ApplicationException ex)
-            {
-                _my.UserError = ex.Message;
-                endRequest(_my, cb);
+                startRequest(_request);
             }
             catch (Exception ex)
             {
-                _my.InternalError = ex;
-                endRequest(_my, cb);
+                writeResponse(new AnyResponse { Error = ex });
+                endRequest();
             }
 
             return this;
@@ -152,9 +157,18 @@ namespace ThumbnailSrv
 
         void IHttpAsyncHandler.EndProcessRequest(IAsyncResult result)
         {
-            logEnd(_my);
+            logEnd(_request);
         }
 
+        void IAnyHandler.WriteResponse(AnyResponse data)
+        {
+            writeResponse(data);
+        }
+
+        void IAnyHandler.NotifyCompletion()
+        {
+            endRequest();
+        }
 
         #endregion
     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 using System.Web;
 using Newtonsoft.Json;
 
@@ -62,67 +63,38 @@ namespace ThumbnailSrv
             return data;
         }
 
-        public static object Dump(this HttpRequest request)
+        public static int OptionalInt(this HttpRequest request, string name, int defaultValue)
         {
-            string[] ignoreList = { "ALL_HTTP", "ALL_RAW", "QUERY_STRING" };
-
-            var cookies = request.Cookies.AllKeys;
-            var queryKeys = request.QueryString.AllKeys;
-            var formKeys = request.Form.AllKeys;
-            var srvKeys = request.ServerVariables.AllKeys;
-
-            var args =
-                from string key in request.Params
-                where !ignoreList.Contains(key)
-                let src =
-                    cookies.Contains(key) ? "C" :
-                    queryKeys.Contains(key) ? "Q" :
-                    formKeys.Contains(key) ? "F" :
-                    srvKeys.Contains(key) ? "S" : "?"
-                let value = request.Params[key]
-                where !String.IsNullOrWhiteSpace(value)
-                select $"[{src}] {key}: '{value}'";
-
-            var headers =
-                from string hdr in request.Headers
-                where hdr.ToLower() != "cookie"
-                select $"{hdr}: '{request.Headers[hdr]}'";
-
-            var dump = new {
-                request.ApplicationPath,
-                request.AppRelativeCurrentExecutionFilePath,
-                //                rq.Browser,
-                //                rq.ContentEncoding,
-                request.ContentLength,
-                request.ContentType,
-                //                rq.Cookies,
-                request.CurrentExecutionFilePath,
-                request.FilePath,
-                request.Form,
-                Headers = headers.ToArray(),
-                request.HttpMethod,
-                request.IsAuthenticated,
-                request.IsLocal,
-                request.IsSecureConnection,
-                //                rq.Params,
-                request.Path,
-                request.PhysicalApplicationPath,
-                request.PhysicalPath,
-                //                rq.QueryString,
-                request.RawUrl,
-                request.RequestType,
-                //                rq.ServerVariables,
-                request.TotalBytes,
-                request.Url,
-                request.UrlReferrer,
-                request.UserAgent,
-                request.UserHostAddress,
-                request.UserHostName,
-                request.UserLanguages,
-                Args = args.ToArray()
-            };
-
-            return dump;
+            var str = request[name];
+            if (String.IsNullOrWhiteSpace(str))
+                return defaultValue;
+            if (!int.TryParse(str, out int value))
+                throw new ApplicationException($"Optional parameter '{name}' is not a number; value='{str}'");
+            return value;
         }
+
+        private static readonly Random _random = new Random();
+
+        public static string GenerateId(this int segmentCount)
+        {
+            var sb = new StringBuilder();
+            var first = _random.Next(10, 100).ToString();
+
+            sb.Append(first);
+            segmentCount--;
+
+            while (segmentCount-- > 0)
+            {
+                var next = _random.Next(0, 100).ToString("00");
+                sb
+                    .Append(".")
+                    .Append(next);
+            }
+
+            return
+                sb.ToString();
+        }
+
+
     }
 }

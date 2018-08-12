@@ -7,61 +7,94 @@ namespace ThumbnailSrv
 {
     interface IApi
     {
-        void Thumbnail(AnyRequest my, string url, int width, int height);
-        byte[] TextToImage(string text, int width, int height);
+        void SetConfig(SrvConfig srvConfig);
+        void Thumbnail(ISrvRequest request);
     }
 
     class Api : IApi
     {
+        #region config
+
+        public class Config
+        {
+            public ThumbnailArgs thumbnail { get; set; } = new ThumbnailArgs();
+
+            public class ThumbnailArgs
+            {
+                public int defaultWidth { get; set; } = 200;
+                public int defaultHeight { get; set; } = 150;
+            }
+        }
+
+        #endregion
+
+        #region members
+
+        private readonly IImageUtilities _helpers;
+        private readonly ITopicLogger _log;
+
+        private Config _config;
+
+        #endregion
+
         #region singleton
 
-        public static IApi Instance { get; } = new Api();
+        public static IApi Instance { get; } = new Api(new Config());
 
-        private Api()
-        { }
+        private Api(Config config)
+        {
+            _helpers = ImageUtilities.New();
+            _log = TopicLogger.New("api");
+            _config = config;
+        }
+
+        #endregion
+
+        #region private
+
+        private void log(ISrvRequest request, Func<string> getMsg, Func<object> getDetails = null)
+        {
+            _log.info(request.TrackingId, getMsg, getDetails);
+        }
 
         #endregion
 
         #region interface
 
-        void IApi.Thumbnail(AnyRequest my, string url, int width, int height)
+        void IApi.SetConfig(SrvConfig srvConfig)
         {
+            var config = new Config {
+                thumbnail = new Config.ThumbnailArgs {
+                    defaultWidth = srvConfig.thumbnail?.defaultWidth ?? _config.thumbnail.defaultWidth,
+                    defaultHeight = srvConfig.thumbnail?.defaultHeight ?? _config.thumbnail.defaultHeight
+                }
+            };
+
+            _config = config;
+        }
+
+        void IApi.Thumbnail(ISrvRequest request)
+        {
+            var config = _config;
+            var http = request.Http.Request;
+
+            var url = http.Require("url");
+            var width = http.OptionalInt("width", config.thumbnail.defaultWidth);
+            var height = http.OptionalInt("height", config.thumbnail.defaultHeight);
+
+            _log.info(request.TrackingId, () => $"thumbnail request for '{url}' width={width} height={height}");
+
             if (url != "http://thumbnail.src/test.jpg")
             {
-                IApi self = this;
-                my.Image = self.TextToImage($"404 - '{url}' is not found", width, height);
-                my.NotifyCompletion();
+                var bytes = _helpers.TextToImage($"404 - '{url}' is not found", width, height);
+                request.EndWith(bytes);
                 return;
             }
 
-            var path = my.Http.Request.MapPath("assets/vladstudio_selfportrait2009.jpg");
-            my.Image = File.ReadAllBytes(path);
+            var path = http.MapPath("assets/demon.jpg");
+            var image = File.ReadAllBytes(path);
 
-            my.NotifyCompletion();
-        }
-
-        byte[] IApi.TextToImage(string text, int width, int height)
-        {
-            var img = new Bitmap(width, height);
-            var drawing = Graphics.FromImage(img);
-            var font = new Font("Ariel", 12);
-            var brush = new SolidBrush(Color.White);
-            var rect = new RectangleF(0, 0, width, height);
-
-            drawing.Clear(Color.Black);
-            drawing.DrawString(text, font, brush, rect);
-            drawing.Save();
-
-            var memory = new MemoryStream();
-            img.Save(memory, ImageFormat.Jpeg);
-            var bytes = memory.ToArray();
-
-            brush.Dispose();
-            font.Dispose();
-            drawing.Dispose();
-            img.Dispose();
-
-            return bytes;
+            request.EndWith(image);
         }
 
         #endregion
