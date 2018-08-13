@@ -6,8 +6,7 @@ namespace ThumbnailSrv
     {
         bool disabled { get; set; }
         void info(string trackingId, Func<string> getMsg, Func<object> getDetails = null);
-        void error(string trackingId, Exception error, Func<string> getMsg, Func<object> getDetails = null);
-        void error(string trackingId, string errMsg, Func<object> getDetails = null);
+        void error(string trackingId, Exception error, string errMsg = null, Func<object> getDetails = null);
     }
 
     class TopicLogger : ITopicLogger
@@ -54,20 +53,12 @@ namespace ThumbnailSrv
             _peer.info(trackingId, _topic, getMsg, getDetails);
         }
 
-        void ITopicLogger.error(string trackingId, Exception error, Func<string> getMsg, Func<object> getDetails)
+        void ITopicLogger.error(string trackingId, Exception error, string errMsg, Func<object> getDetails)
         {
             if (_disabled)
                 return;
 
-            _peer.error(trackingId, _topic, error, getMsg, getDetails);
-        }
-
-        void ITopicLogger.error(string trackingId, string errMsg, Func<object> getDetails)
-        {
-            if (_disabled)
-                return;
-
-            _peer.error(trackingId, _topic, errMsg, getDetails);
+            _peer.error(trackingId, _topic, error, errMsg, getDetails);
         }
 
         #endregion

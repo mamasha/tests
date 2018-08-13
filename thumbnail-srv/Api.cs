@@ -2,9 +2,15 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace ThumbnailSrv
 {
+    interface IAsyncFlow
+    {
+        void ContinueTo(Task task, Action next);
+    }
+
     interface IApi
     {
         void SetConfig(SrvConfig srvConfig);
@@ -32,6 +38,9 @@ namespace ThumbnailSrv
 
         private readonly IImageUtilities _helpers;
         private readonly ITopicLogger _log;
+        private readonly IImageCache _local;
+        private readonly IThumbnailOp _thumbnail;
+        private readonly IAsyncFlow _async;
 
         private Config _config;
 
@@ -51,33 +60,6 @@ namespace ThumbnailSrv
         #endregion
 
         #region private
-
-        private void log(ISrvRequest request, Func<string> getMsg, Func<object> getDetails = null)
-        {
-            _log.info(request.TrackingId, getMsg, getDetails);
-        }
-
-        private void thumbnailFlow()
-        {
-            // get resource
-            var ttt = _cache.Get(url);
-
-            switch (ttt.What)
-            {
-                case "new":
-                    _cache.Resolve(url, _web.StartDownload());
-                    next("ready");
-                    break;
-
-                case "pending":
-                    next("ready");
-                    break;
-
-                case "ready":
-                    break;
-            }
-
-        }
 
         #endregion
 
@@ -107,6 +89,17 @@ namespace ThumbnailSrv
 
             _log.info(trackingId, () => $"thumbnail request for '{url}' width={width} height={height}");
 
+            var key = $"{url}_{width}x{height}";
+
+            _thumbnail.AsyncFlow(new ThumbnailRequest {
+                Srv = request,
+                Url = url,
+                Width = width,
+                Height = height,
+                Key = key
+            });
+
+/*
             if (url != "http://thumbnail.src/test.jpg")
             {
                 var errMsg = $"{trackingId} - '{url}' is not found";
@@ -120,6 +113,7 @@ namespace ThumbnailSrv
             var image = File.ReadAllBytes(path);
 
             request.EndWith(image);
+*/
         }
 
         #endregion

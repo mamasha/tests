@@ -7,8 +7,7 @@ namespace ThumbnailSrv
     interface ILogger
     {
         void info(string trackingId, string topic, Func<string> getMsg, Func<object> getDetails = null);
-        void error(string trackingId, string topic, Exception error, Func<string> getMsg = null, Func<object> getDetails = null);
-        void error(string trackingId, string topic, string errMsg, Func<object> getDetails = null);
+        void error(string trackingId, string topic, Exception error, string errMsg = null, Func<object> getDetails = null);
         object Dump();
     }
 
@@ -63,10 +62,56 @@ namespace ThumbnailSrv
 
         private void enqueue(Item item)
         {
-            if (_que.Count >= _config.HistoryDepth)
-                _que.Dequeue();
+            lock (this)
+            {
+                if (_que.Count >= _config.HistoryDepth)
+                    _que.Dequeue();
 
-            _que.Enqueue(item);
+                _que.Enqueue(item);
+            }
+        }
+
+        private void push(string severity, string trackingId, string topic, Exception error, 
+            Func<string> getMsg, Func<object> getDetails)
+        {
+            string msg;
+            object details = null;
+
+            try
+            {
+                msg = getMsg();
+            }
+            catch (Exception ex)
+            {
+                msg = $"Failed to get a message ({ex.Message})";
+            }
+
+            try
+            {
+                if (getDetails != null)
+                    details = getDetails();
+            }
+            catch
+            {
+                // nothing to do here
+            }
+
+            if (msg.IsEmpty())
+            {
+                msg = 
+                    error != null ? error.Message : "No message is here";
+            }
+
+            var item = new Item {
+                Severity = "I",
+                TrackingId = trackingId,
+                Topic = topic,
+                Msg = msg,
+                Details = details,
+                Error = error
+            };
+
+            enqueue(item);
         }
 
         private static object formatMsg(Item item)
@@ -104,94 +149,12 @@ namespace ThumbnailSrv
             if (getMsg == null)
                 return;
 
-            string msg;
-            object details = null;
-
-            try
-            {
-                msg = getMsg();
-                if (getDetails != null)
-                    details = getDetails();
-            }
-            catch (Exception ex)
-            {
-                msg = $"Failed to get a message ({ex.Message})";
-            }
-
-            var item = new Item {
-                Severity = "I",
-                TrackingId = trackingId,
-                Topic = topic,
-                Msg = msg,
-                Details = details
-            };
-
-            lock (this)
-            {
-                enqueue(item);
-            }
+            push("I", trackingId, topic, null, getMsg, getDetails);
         }
 
-        void ILogger.error(string trackingId, string topic, Exception error, Func<string> getMsg, Func<object> getDetails)
+        void ILogger.error(string trackingId, string topic, Exception error, string errMsg, Func<object> getDetails)
         {
-            string msg = null;
-            object details = null;
-
-            try
-            {
-                if (getMsg != null)
-                    msg = getMsg();
-
-                if (getDetails != null)
-                    details = getDetails();
-            }
-            catch (Exception ex)
-            {
-                msg = $"Failed to get a message ({ex.Message})";
-            }
-
-            var item = new Item {
-                Severity = "E",
-                TrackingId = trackingId,
-                Topic = topic,
-                Msg = msg,
-                Details = details, 
-                Error = error
-            };
-
-            lock (this)
-            {
-                enqueue(item);
-            }
-        }
-
-        void ILogger.error(string trackingId, string topic, string errMsg, Func<object> getDetails)
-        {
-            object details = null;
-
-            try
-            {
-                if (getDetails != null)
-                    details = getDetails();
-            }
-            catch
-            {
-                // nothing to do here
-            }
-
-            var item = new Item
-            {
-                Severity = "E",
-                TrackingId = trackingId,
-                Topic = topic,
-                Msg = errMsg,
-                Details = details
-            };
-
-            lock (this)
-            {
-                enqueue(item);
-            }
+            push("E", trackingId, topic, error, () => errMsg, getDetails);
         }
 
         object ILogger.Dump()
