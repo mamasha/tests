@@ -3,12 +3,14 @@ using System.Threading.Tasks;
 
 namespace ThumbnailSrv
 {
-    delegate bool GotoState<T>(T data);
+    delegate void OnSuccess<T>(T value);
+    delegate void OnError(string key, Exception error);
 
     interface IAsyncFlow<T>
     {
-        void WhenReady(string key, GotoState<T> gotoNext);
-        void Signal(string key, Task<T> task);
+        void WhenReady(string keyError, OnSuccess<T> onSuccess);
+        bool RegisterSignal(string key);
+        void Signal(string key, Task<T> task, OnError onError);
     }
 
     class AsyncFlow<T> : IAsyncFlow<T>
@@ -19,37 +21,18 @@ namespace ThumbnailSrv
 
         #region interface
 
-        void IAsyncFlow<T>.WhenReady(string key, GotoState<T> gotoNext)
+        void IAsyncFlow<T>.WhenReady(string key, OnSuccess<T> onSuccess)
         {
         }
 
-        void IAsyncFlow<T>.Signal(string key, Task<T> task)
+        bool IAsyncFlow<T>.RegisterSignal(string key)
+        {
+            return true;
+        }
+
+        void IAsyncFlow<T>.Signal(string key, Task<T> task, OnError onError)
         {
         }
         #endregion
-    }
-
-    static class AsyncFlowHelpers
-    {
-        public static bool Next<T>(this IAsyncFlow<T> async, GotoState<T> gotoState, CacheItem<T> item)
-        {
-            switch (item.State)
-            {
-                case CacheState.New:
-                    async.WhenReady(item.Key, gotoState);
-                    return true;
-
-                case CacheState.Pending:
-                    async.WhenReady(item.Key, gotoState);
-                    return false;
-
-                case CacheState.Ready:
-                    gotoState(item.Value);
-                    return false;
-
-                default:
-                    throw new Exception("Should not get here");
-            }
-        }
     }
 }

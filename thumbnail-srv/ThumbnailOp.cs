@@ -46,6 +46,9 @@ namespace ThumbnailSrv
 
         #region private
 
+        private void onError(string key, Exception error)
+        { }
+
         private bool runStateMachine(string state, ThumbnailRequest request, byte[] image = null)
         {
             var thumbnailKey = request.Key;
@@ -59,37 +62,35 @@ namespace ThumbnailSrv
                     var thumbnailItem = _cache.Get(thumbnailKey);
 
                     if (thumbnailItem.Value != null)
-                        return runStateMachine("resize-ready", request, thumbnailItem.Value);
+                        return runStateMachine("thumbnail-ready", request, thumbnailItem.Value);
+
+                    _async.WhenReady(downloadKey,
+                        bytes => runStateMachine("download-ready", request, bytes));
 
                     _async.WhenReady(thumbnailKey,
-                        bytes => runStateMachine("resize-ready", request, bytes));
-
-                    _async.WhenReady(downloadKey, 
-                        bytes => runStateMachine("download-ready", request, bytes));
+                        bytes => runStateMachine("thumbnail-ready", request, bytes));
 
                     if (thumbnailItem.State == CacheState.New)
                     {
                         Task<byte[]> downloadTask = null;
-                        _async.Signal(downloadKey, downloadTask);
+                        _async.Signal(downloadKey, downloadTask, onError);
                     }
 
                     return false;
 
                 case "download-ready":
-/*
-                    var downloadItem = _cache.Get(downloadKey);
+                    _cache.Put(downloadKey, image);
 
-                    if (downloadItem.Value != null)
-                        return runStateMachine("resize-ready", request, downloadItem.Value);
+                    if (_async.RegisterSignal(thumbnailKey))
+                    {
+                        Task<byte[]> thumbnailTask = null;
+                        _async.Signal(thumbnailKey, thumbnailTask, onError);
+                    }
 
-                    if (downloadItem.State == CacheState.Pending)
-                        return false;
-*/
-                    Task<byte[]> resizeTask = null;
-                    _async.Signal(thumbnailKey, resizeTask);
                     return false;
 
-                case "resize-ready":
+                case "thumbnail-ready":
+                    _cache.Put(thumbnailKey, image);
                     request.Srv.EndWith(image);
                     return true;
 
