@@ -5,11 +5,11 @@
         New, Pending, Ready
     }
 
-    class CacheItem
+    class CacheItem<T>
     {
         public string Key { get; }
         public CacheState State { get; set; }
-        public byte[] Image { get; set; }
+        public T Value { get; set; }
 
         public CacheItem(string key)
         {
@@ -17,20 +17,20 @@
         }
     }
 
-    interface IImageCache
+    interface IImageCache<T>
     {
-        CacheItem Get(string key);
-        void Put(string key, byte[] image);
+        CacheItem<T> Get(string key);
+        void Put(string key, T value);
     }
 
-    class ImageCache : IImageCache
+    class ImageCache<T> : IImageCache<T>
     {
         #region construction
 
-        public static IImageCache New()
+        public static IImageCache<T> New()
         {
             return 
-                new ImageCache();
+                new ImageCache<T>();
         }
 
         private ImageCache()
@@ -40,12 +40,12 @@
 
         #region interface
 
-        CacheItem IImageCache.Get(string key)
+        CacheItem<T> IImageCache<T>.Get(string key)
         {
             return null;
         }
 
-        void IImageCache.Put(string key, byte[] image)
+        void IImageCache<T>.Put(string key, T image)
         {
         }
 

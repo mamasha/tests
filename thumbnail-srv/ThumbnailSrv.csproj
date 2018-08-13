@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="AnyHandler.cs" />
     <Compile Include="Api.cs" />
+    <Compile Include="AsyncFlow.cs" />
     <Compile Include="HttpHelpers.cs" />
     <Compile Include="ImageCache.cs" />
     <Compile Include="ImageUtilities.cs" />

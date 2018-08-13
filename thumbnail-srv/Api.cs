@@ -6,11 +6,6 @@ using System.Threading.Tasks;
 
 namespace ThumbnailSrv
 {
-    interface IAsyncFlow
-    {
-        void ContinueTo(Task task, Action next);
-    }
-
     interface IApi
     {
         void SetConfig(SrvConfig srvConfig);
@@ -38,9 +33,8 @@ namespace ThumbnailSrv
 
         private readonly IImageUtilities _helpers;
         private readonly ITopicLogger _log;
-        private readonly IImageCache _local;
+
         private readonly IThumbnailOp _thumbnail;
-        private readonly IAsyncFlow _async;
 
         private Config _config;
 
@@ -91,12 +85,12 @@ namespace ThumbnailSrv
 
             var key = $"{url}_{width}x{height}";
 
-            _thumbnail.AsyncFlow(new ThumbnailRequest {
+            _thumbnail.Process(new ThumbnailRequest {
                 Srv = request,
+                Key = key,
                 Url = url,
                 Width = width,
-                Height = height,
-                Key = key
+                Height = height
             });
 
 /*

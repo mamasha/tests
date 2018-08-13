@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ThumbnailSrv
@@ -14,7 +15,7 @@ namespace ThumbnailSrv
 
     interface IThumbnailOp
     {
-        void AsyncFlow(ThumbnailRequest request);
+        void Process(ThumbnailRequest request);
     }
 
     class ThumbnailOp : IThumbnailOp
@@ -22,19 +23,20 @@ namespace ThumbnailSrv
         #region members
 
         private readonly ITopicLogger _log;
-        private readonly IImageCache _cache;
+        private readonly IImageCache<byte[]> _cache;
+        private readonly IAsyncFlow<byte[]> _async;
 
         #endregion
 
         #region construction
 
-        public static IThumbnailOp New(IImageCache cache)
+        public static IThumbnailOp New(IImageCache<byte[]> cache)
         {
             return
                 new ThumbnailOp(cache);
         }
 
-        private ThumbnailOp(IImageCache cache)
+        private ThumbnailOp(IImageCache<byte[]> cache)
         {
             _log = TopicLogger.New("thumbnail-op");
             _cache = cache;
@@ -44,82 +46,55 @@ namespace ThumbnailSrv
 
         #region private
 
+        private bool runStateMachine(string state, ThumbnailRequest request, byte[] image = null)
+        {
+            var thumbnailKey = request.Key;
+            var downloadKey = request.Url;
+
+            switch (state)
+            {
+                case null:
+                case "":
+                case "start":
+                    var thumbnailItem = _cache.Get(thumbnailKey);
+
+                    if (thumbnailItem.Value != null)
+                        return runStateMachine("resize-ready", request, thumbnailItem.Value);
+
+                    _async.WhenReady(thumbnailKey,
+                        bytes => runStateMachine("resize-ready", request, bytes));
+
+                    _async.WhenReady(downloadKey, 
+                        bytes => runStateMachine("download-ready", request, bytes));
+
+                    if (thumbnailItem.State == CacheState.New)
+                    {
+                        Task<byte[]> downloadTask = null;
+                        _async.Signal(downloadKey, downloadTask);
+                    }
+
+                    return false;
+
+                case "download-ready":
 /*
-        private void asyncFlow(string state, ThumbnailRequest request, byte[] image = null)
-        {
-            var trackingId = request.Srv.TrackingId;
+                    var downloadItem = _cache.Get(downloadKey);
 
-            switch (state)
-            {
-                case "start":
-                    {
-                        var item = _local.Get(request.Key);
+                    if (downloadItem.Value != null)
+                        return runStateMachine("resize-ready", request, downloadItem.Value);
 
-                        if (item.State == CacheState.Ready)
-                        {
-                            thumbnailFlow("image-ready", request, item.Image);
-                            return;
-                        }
-
-                        _async.WhenReady(request.Key,
-                            bytes => thumbnailFlow("local-cache-ready", request, bytes));
-
-                        if (item.State == CacheState.New)
-                        {
-                            var task = Task.Run(() => { });
-                            _async.Set(request.Key, task);
-                        }
-
-                        return;
-                    }
-
-                case "local-cache-ready":
-                    {
-                        _async.Resolve(request.Key, image);
-                        var bytes = _helpers.Rescale(image, request.Width, request.Height);
-                        thumbnailFlow("image-ready", request, bytes);
-                        return;
-                    }
-
-                case "image-ready":
-                    _local.Put(request.Key, image);
-                    request.Srv.EndWith(image);
-                    return;
-
-                default:
-                    _log.error(trackingId, null, $"Unexpected state '{state ?? "n/a"}'");
-                    return;
-            }
-        }
+                    if (downloadItem.State == CacheState.Pending)
+                        return false;
 */
-
-        private void asyncFlow2(string state, ThumbnailRequest request, byte[] image = null)
-        {
-            void next(string toState, Action action)
-            {
-                asyncFlow2(toState, request);
-            }
-
-            switch (state)
-            {
-                case "start":
-                    next("cache-new", () => _cache.Get(""));
-                    break;
-
-                case "cache-new":
-                    next("cache-pending", () => _cache.Get(""));
-                    break;
-
-                case "cache-pending":
-                    next("cache-ready", () => _cache.Get(""));
-                    break;
-
-                case "cache-ready":
-                    next("resize-ready", () => _cache.Get(""));
-                    break;
+                    Task<byte[]> resizeTask = null;
+                    _async.Signal(thumbnailKey, resizeTask);
+                    return false;
 
                 case "resize-ready":
-                    break;
+                    request.Srv.EndWith(image);
+                    return true;
+
+                default:
+                    throw new Exception("Should not get here");
             }
         }
 
@@ -127,8 +102,9 @@ namespace ThumbnailSrv
 
         #region interface
 
-        void IThumbnailOp.AsyncFlow(ThumbnailRequest request)
+        void IThumbnailOp.Process(ThumbnailRequest request)
         {
+            runStateMachine("start", request);
         }
 
         #endregion
