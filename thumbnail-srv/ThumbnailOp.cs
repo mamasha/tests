@@ -72,11 +72,12 @@ namespace ThumbnailSrv
                 {
                     _log.error(trackingId, ex, $"Failed to download '{url}' ({ex.Message})");
                     return
-                        _helpers.TextToImage(request.Width, request.Height, ex.Message);
+                        _helpers.TextToImage(request.Width, request.Height, $"{ex.Message} (trackingId={trackingId})");
                 }
             }
 
-            return Task.Run(() => download());
+            return 
+                Task.Run(() => download());
         }
 
         private Task<byte[]> resizeImage(ThumbnailRequest request, byte[] image)
@@ -101,11 +102,12 @@ namespace ThumbnailSrv
                 {
                     _log.error(trackingId, ex, $"Failed to resize an image ({ex.Message})");
                     return
-                        _helpers.TextToImage(request.Width, request.Height, ex.Message);
+                        _helpers.TextToImage(request.Width, request.Height, $"{ex.Message} (trackingId={trackingId})");
                 }
             }
 
-            return Task.Run(() => resize());
+            return 
+                Task.Run(() => resize());
         }
 
         private bool runStateMachine(string state, ThumbnailRequest request, byte[] image = null, Exception error = null)
