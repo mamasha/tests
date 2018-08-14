@@ -12,7 +12,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ThumbnailSrv</RootNamespace>
     <AssemblyName>ThumbnailSrv</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <UseIISExpress>true</UseIISExpress>
     <Use64BitIISExpress />
     <IISExpressSSLPort />
@@ -68,7 +68,7 @@
     <Compile Include="Api.cs" />
     <Compile Include="AsyncFlow.cs" />
     <Compile Include="HttpHelpers.cs" />
-    <Compile Include="ImageCache.cs" />
+    <Compile Include="LocalCache.cs" />
     <Compile Include="ImageUtilities.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

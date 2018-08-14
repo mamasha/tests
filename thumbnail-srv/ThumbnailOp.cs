@@ -23,20 +23,20 @@ namespace ThumbnailSrv
         #region members
 
         private readonly ITopicLogger _log;
-        private readonly IImageCache<byte[]> _cache;
+        private readonly ILocalCache<byte[]> _cache;
         private readonly IAsyncFlow<byte[]> _async;
 
         #endregion
 
         #region construction
 
-        public static IThumbnailOp New(IImageCache<byte[]> cache)
+        public static IThumbnailOp New(ILocalCache<byte[]> cache)
         {
             return
                 new ThumbnailOp(cache);
         }
 
-        private ThumbnailOp(IImageCache<byte[]> cache)
+        private ThumbnailOp(ILocalCache<byte[]> cache)
         {
             _log = TopicLogger.New("thumbnail-op");
             _cache = cache;
@@ -46,11 +46,16 @@ namespace ThumbnailSrv
 
         #region private
 
-        private void onError(string key, Exception error)
-        { }
+        private void handleError(ThumbnailRequest request, string key, Exception error)
+        {
+            _log.error(request.Srv.TrackingId, error, $"While waiting for '{key}' key");
+        }
 
         private bool runStateMachine(string state, ThumbnailRequest request, byte[] image = null)
         {
+            void onError(string key, Exception error) =>
+                handleError(request, key, error);
+
             var thumbnailKey = request.Key;
             var downloadKey = request.Url;
 
