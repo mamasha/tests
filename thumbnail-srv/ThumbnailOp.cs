@@ -89,7 +89,7 @@ namespace ThumbnailSrv
             {
                 try
                 {
-                    _log.info(trackingId, () => $"Resizing to {width}x{height} jpeg");
+                    _log.info(trackingId, () => $"Resize and change format to {width}x{height} jpeg");
                     var bytes = _helpers.ResizeImage(trackingId, image, width, height);
 
                     if (bytes == null)

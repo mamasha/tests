@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -38,9 +39,56 @@ namespace ThumbnailSrv
 
         #region private
 
-        private static Bitmap resizeImageToBitmap(Image image, int width, int height)
+        private Rectangle calculateInnerRect(string trackingId, decimal imgWidth, decimal imgHeight, decimal width, decimal height)
         {
-            var destRect = new Rectangle(0, 0, width, height);
+            Rectangle rect(decimal x, decimal y, decimal dx, decimal dy) =>
+                new Rectangle((int) x, (int) y, (int) dx, (int) dy);
+
+            if (width >= imgWidth && height >= imgHeight)
+            {
+                var left = (width - imgWidth) / 2;
+                var top = (height - imgHeight) / 2;
+                return 
+                    rect(left, top, imgWidth, imgHeight);
+            }
+
+            var srcRation = imgWidth / imgHeight;
+            var ration = width / height;
+
+            if (ration == srcRation)
+            {
+                return
+                    rect(0, 0, width, height);
+            }
+
+            if (ration > srcRation)     // width to be adjusted
+            {
+                var dx = height * srcRation;
+                Trace.Assert(width > dx);
+                var left = (width - dx) / 2;
+                return
+                    rect(left, 0, dx, height);
+            }
+
+            if (ration < srcRation)     // height to be adjusted
+            {
+                var dy = width / srcRation;
+                Trace.Assert(height > dy);
+                var top = (height - dy) / 2;
+                return
+                    rect(0, top, width, dy);
+            }
+
+            throw
+                new ApplicationException($"Resize with original original aspect ration - logic failed; {imgWidth}x{imgHeight} --> {width}x{height}");
+        }
+
+        private Bitmap resizeImageToBitmap(string trackingId, Image image, int width, int height)
+        {
+            var innerRect = calculateInnerRect(trackingId, image.Width, image.Height, width, height);
+
+            _log.info(trackingId, () => $"resize  {image.Width}x{image.Height} --> {width}x{height}  =  [{innerRect.Top} {innerRect.Left} {innerRect.Width}x{innerRect.Height}]");
+
             var destImage = new Bitmap(width, height);
 
             destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
@@ -56,7 +104,7 @@ namespace ThumbnailSrv
                 using (var wrapMode = new ImageAttributes())
                 {
                     wrapMode.SetWrapMode(WrapMode.TileFlipXY);
-                    graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
+                    graphics.DrawImage(image, innerRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
                 }
             }
 
@@ -120,10 +168,13 @@ namespace ThumbnailSrv
                     sameSize && ImageFormat.Jpeg.Equals(srcImg.RawFormat);
 
                 if (noResizeIsNeeded)
+                {
+                    _log.info(trackingId, () => "same size, same format (resize is skipped)");
                     return src;
+                }
 
                 var dstImg = sameSize ? srcImg :
-                    resizeImageToBitmap(srcImg, width, height);
+                    resizeImageToBitmap(trackingId, srcImg, width, height);
 
                 using (var dstMem = new MemoryStream())
                 {

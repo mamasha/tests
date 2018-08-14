@@ -4,7 +4,35 @@
 
 <html lang="en">
 <body>
-    <img src="/thumbnail?width=v200&height=100&url=http://other.src/test.jpg"/><br/>
-    <img src="/thumbnail?width=100&height=100&url=http://thumbnail.src/test.jpg"/><br/>
+    <div>
+        <img src="/thumbnail?width=300&height=200&url=https://res.cloudinary.com/demo/image/upload/w_300,h_200/sample.jpg" />
+        <p>300x200 - no resize</p>
+    </div>
+    <div>
+        <img src="/thumbnail?width=300&height=200&url=https://res.cloudinary.com/demo/image/upload/w_300,h_200/sample.png" />
+        <p>300x200 - from PNG</p>
+    </div>
+
+    <div>
+        <img src="/thumbnail?width=400&height=200&url=https://res.cloudinary.com/demo/image/upload/sample.png" />
+        <p>864x576 ==> 400x200  pading left right</p>
+    </div>
+
+    <div>
+        <img src="/thumbnail?width=300&height=250&url=https://res.cloudinary.com/demo/image/upload/sample.png" />
+        <p>864x576 ==> 300x250  pading up bottom</p>
+    </div>
+    <div>
+        <img src="/thumbnail?width=400&height=300&url=https://res.cloudinary.com/demo/image/upload/w_300,h_200/sample.png" />
+        <p>300x200 ==> 400x300 pading all</p>
+    </div>
+    <div>
+        <img src="/thumbnail?width=300&height=200&url=https://res.cloudinary.com/demo/image/upload/no-file" />
+        <p>Not found</p>
+    </div>
+    <div>
+        <img src="/thumbnail?width=300&height=200&url=https://cloudinary.com/documentation/image_transformations#lpad_limit_pad" />
+        <p>Not an image</p>
+    </div>
 </body>
 </html>
