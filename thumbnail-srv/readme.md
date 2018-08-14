@@ -11,40 +11,37 @@ Visual Studio 2017 --> Publish to Dropbox folder --> Azure deploy from Dropbox
 
 ### Sources - points of interest
 
-Resize implementation is in [ImageUtilities.cs](./ImageUtilities.cs)
-Scaling can be seen through [ThumbnailOp.cs](./ThumbnailOp.cs) `runStateMachine()` function
-Routing and endpoints in [AnyHandler.cs](./AnyHandler.cs) `startRequest()` function
+- Resize implementation is in [ImageUtilities.cs](./ImageUtilities.cs)
+- Scaling can be seen through [ThumbnailOp.cs](./ThumbnailOp.cs) `runStateMachine()` function
+- Routing and endpoints in [AnyHandler.cs](./AnyHandler.cs) `startRequest()` function
 
 ### Request flow
 
-[AnyHandler.cs](./AnyHandler.cs)  ==>
-[Api.cs](./Api.cs)  ==>
-[ThumbnailOp.cs](./ThumbnailOp.cs)  ==>
+[AnyHandler.cs](./AnyHandler.cs)  -->
+[Api.cs](./Api.cs)  -->
+[ThumbnailOp.cs](./ThumbnailOp.cs)  -->
 [ImageUtilities.cs](./ImageUtilities.cs)
 
-### Thoughts on implementation of thumbnail operation (state machine)
+### Thoughts on implementation of a thumbnail operation
+
+**The state machine logic**
 
 - Look if a needed thumbnail is in cache
-- If so retrieve from cache and return
-- Am I first to get the thumbnail? ==> schedule a download
-- Wait for download of a remote image to be completed
-- Am I first to resize the downloaded image? ==> schedule a resize
+- If so retrieve from cache
+- Am I first to get the thumbnail? 
+    --> schedule a download
+- Wait for download to be completed
+- Am I first to resize the thumbnail? 
+    --> schedule a resize
 - Wait for resize to be completed
 - Put a ready thumbnail to cache
 
-As a result of this state machine each remote image is downloaded only once. As well a resize operation is also done only once. In a case of concurrent request for a same image (burst of CNN) all requests are waiting until the first one downloads the required image. The same is happening for resize operation.
+As a result of such a state machine each remote image is downloaded only once. A resize operation is done only once as well. Concurrent requests for a same image (burst of CNN) wait for the first single download to be completed. The same is happening for a resize operation.
 
-No blocking waits. An Image re-sampling is done by background threads.
-
-### Infrastructure classes
-
-Logging - Logger.cs and TopicLogger.cs
-Caching - LocalCache.cs
-Async - AsyncFlow.cs
-Asp.Net - AnyHandler.cs
+No blocking waits. An image re-sampling is done by a background thread.
 
 
-### Concerns encapsulated
+### Concerns encapsulation
 
 - AnyHandler.cs and SrvRequest.cs encapsulate Asp.Net interaction
 - Api.cs encapsulates API parameters and routing 
@@ -53,11 +50,19 @@ Asp.Net - AnyHandler.cs
 - AsyncFlow.cs encapsulates asynchronous programing model
 
 
+### Infrastructure classes
+
+- Caching - LocalCache.cs
+- Asynchronous programming - AsyncFlow.cs
+- Asp.Net - AnyHandler.cs and SrvRequest.cs
+- Logging - Logger.cs and TopicLogger.cs
+
+
 ### Techniques used in solution
 
 #### Programing to interface
 
-Programming to interface has implementation benefits on its own. But its real glory is expressing the building blocks of a problem domain in a short and concise way. With interfaces it is a matter of seconds to see if a class represents a decoupled concern and stands for the SOLID principles.
+Programming to interface has implementation benefits on its own. But its real glory is in expressing of building blocks of a problem domain in a short and concise way. With interfaces it is a matter of seconds to see how a class represents a decoupled concern and stands for the SOLID principles.
 
 #### Separation of concerns
 
