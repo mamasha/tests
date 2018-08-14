@@ -52,27 +52,27 @@ namespace ThumbnailSrv
                     rect(left, top, imgWidth, imgHeight);
             }
 
-            var srcRatio = imgWidth / imgHeight;
+            var imgRatio = imgWidth / imgHeight;
             var ratio = width / height;
 
-            if (ratio == srcRatio)
+            if (ratio == imgRatio)
             {
                 return
                     rect(0, 0, width, height);
             }
 
-            if (ratio > srcRatio)     // width to be adjusted
+            if (ratio > imgRatio)     // width to be adjusted
             {
-                var dx = height * srcRatio;
+                var dx = height * imgRatio;
                 Trace.Assert(width > dx);
                 var left = (width - dx) / 2;
                 return
                     rect(left, 0, dx, height);
             }
 
-            if (ratio < srcRatio)     // height to be adjusted
+            if (ratio < imgRatio)     // height to be adjusted
             {
-                var dy = width / srcRatio;
+                var dy = width / imgRatio;
                 Trace.Assert(height > dy);
                 var top = (height - dy) / 2;
                 return
@@ -80,7 +80,7 @@ namespace ThumbnailSrv
             }
 
             throw
-                new ApplicationException($"Resize with original original aspect ration - logic failed; {imgWidth}x{imgHeight} --> {width}x{height}");
+                new Exception("Should not get here");
         }
 
         private Bitmap resizeImageToBitmap(string trackingId, Image image, int width, int height)
