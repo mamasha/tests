@@ -82,6 +82,9 @@ namespace ThumbnailSrv
             var width = http.OptionalInt("width", config.thumbnail.defaultWidth);
             var height = http.OptionalInt("height", config.thumbnail.defaultHeight);
 
+            if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
+                throw new ApplicationException($"Bad url '{url}'");
+
             _log.info(trackingId, () => $"thumbnail request [{width} x {height}] for '{url}'");
 
             var key = $"{url}_{width}x{height}";

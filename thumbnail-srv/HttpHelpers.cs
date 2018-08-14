@@ -40,7 +40,7 @@ namespace ThumbnailSrv
 
         public static string Require(this HttpRequest request, string name)
         {
-            var value = request[name];
+            var value = request.QueryString[name];
             if (String.IsNullOrWhiteSpace(value))
                 throw new ApplicationException($"Required parameter '{name}' is not found in request");
             return value;

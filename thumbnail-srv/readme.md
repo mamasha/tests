@@ -22,7 +22,7 @@ Visual Studio 2017 --> Publish to Dropbox folder --> Azure deploy from Dropbox
 [ThumbnailOp.cs](./ThumbnailOp.cs)  -->
 [ImageUtilities.cs](./ImageUtilities.cs)
 
-### Thoughts on implementation of a thumbnail operation
+### Thoughts on implementation
 
 **The state machine logic**
 
@@ -40,6 +40,7 @@ As a result of such a state machine each remote image is downloaded only once. A
 
 No blocking waits. An image re-sampling is done by a background thread.
 
+The real gem of this project is AsyncFlow class. I have been thinking about various asynchronous programming models many years. I felt like a switch statement was a very promising idea for encapsulating an asynchronous state machine within a single function. That's what AsyncFlow class is all about.
 
 ### Concerns encapsulation
 
