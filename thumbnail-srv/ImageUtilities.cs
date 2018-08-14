@@ -52,27 +52,27 @@ namespace ThumbnailSrv
                     rect(left, top, imgWidth, imgHeight);
             }
 
-            var srcRation = imgWidth / imgHeight;
-            var ration = width / height;
+            var srcRatio = imgWidth / imgHeight;
+            var ratio = width / height;
 
-            if (ration == srcRation)
+            if (ratio == srcRatio)
             {
                 return
                     rect(0, 0, width, height);
             }
 
-            if (ration > srcRation)     // width to be adjusted
+            if (ratio > srcRatio)     // width to be adjusted
             {
-                var dx = height * srcRation;
+                var dx = height * srcRatio;
                 Trace.Assert(width > dx);
                 var left = (width - dx) / 2;
                 return
                     rect(left, 0, dx, height);
             }
 
-            if (ration < srcRation)     // height to be adjusted
+            if (ratio < srcRatio)     // height to be adjusted
             {
-                var dy = width / srcRation;
+                var dy = width / srcRatio;
                 Trace.Assert(height > dy);
                 var top = (height - dy) / 2;
                 return
