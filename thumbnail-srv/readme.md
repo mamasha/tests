@@ -1,7 +1,7 @@
 ## Thumbnail demo service
 
-Start with [unit tests page]()  
-Then go to [Log endpoint]()
+Start with [unit tests page](https://thumbnail-srv.azurewebsites.net/unit/test.html)  
+Then go to a [log endpoint](https://thumbnail-srv.azurewebsites.net/log)  
 
 
 ### Compilation and publish
