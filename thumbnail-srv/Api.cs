@@ -86,7 +86,7 @@ namespace ThumbnailSrv
             var width = http.OptionalInt("width", config.thumbnail.defaultWidth);
             var height = http.OptionalInt("height", config.thumbnail.defaultHeight);
 
-            _log.info(trackingId, () => $"thumbnail request for '{url}' width={width} height={height}");
+            _log.info(trackingId, () => $"thumbnail request [{width} x {height}] for '{url}'");
 
             var key = $"{url}_{width}x{height}";
 

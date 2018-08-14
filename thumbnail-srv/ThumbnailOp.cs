@@ -52,16 +52,43 @@ namespace ThumbnailSrv
 
         #region private
 
-        private Task<byte[]> downloadImage(string url)
+        private Task<byte[]> downloadImage(ThumbnailRequest request, string url)
         {
-            return Task.Run( 
-                () => _web.DownloadData(url));
+            var trackingId = request.Srv.TrackingId;
+
+            byte[] download()
+            {
+                try
+                {
+                    _log.info(trackingId, () => $"Downloading '{url}'");
+                    return
+                        _web.DownloadData(url);
+                }
+                catch (Exception ex)
+                {
+                    _log.error(trackingId, ex, $"Failed to download '{url}' ({ex.Message})");
+                    return
+                        _helpers.TextToImage(request.Width, request.Height, ex.Message);
+                }
+            }
+
+            return Task.Run(() => download());
         }
 
-        private Task<byte[]> resizeImage(byte[] image, int width, int height)
+        private Task<byte[]> resizeImage(ThumbnailRequest request, byte[] image)
         {
-            return Task.Run(
-                () => _helpers.TextToImage(width, height, $"{width}x{height} thumbnail is ready"));
+            var trackingId = request.Srv.TrackingId;
+            int width = request.Width;
+            int height = request.Height;
+
+            byte[] resize()
+            {
+                _log.info(trackingId, () => $"Resizing to {width}x{height} jpeg");
+                return
+                    _helpers.ResizeImage(image, width, height);
+            }
+
+            return Task.Run(() => resize());
         }
 
         private bool runStateMachine(string state, ThumbnailRequest request, byte[] image = null, Exception error = null)
@@ -87,7 +114,7 @@ namespace ThumbnailSrv
 
                     var cacheHit = thumbnail != null;
 
-                    _log.info(trackingId, () => $"{state}: firstTouch={firstTouch}, cacheHit={cacheHit}, downloadKey='{downloadKey}'");
+                    _log.info(trackingId, () => $"{state} firstTouch={firstTouch}, cacheHit={cacheHit}");
 
                     if (cacheHit)
                         return runStateMachine("thumbnail-ready", request, thumbnail);
@@ -96,7 +123,7 @@ namespace ThumbnailSrv
                         (bytes, ex) => runStateMachine("download-ready", request, bytes, ex));
 
                     if (firstTouch)
-                        _async.WaitFor(downloadKey, downloadImage(request.Url));
+                        _async.WaitFor(downloadKey, downloadImage(request, request.Url));
 
                     return false;
 
@@ -108,10 +135,10 @@ namespace ThumbnailSrv
 
                     var noResizeTaskIsThere = _async.TouchPoint(thumbnailKey);
 
-                    _log.info(trackingId, () => $"{state}: noResizeTaskIsThere={noResizeTaskIsThere}, thumbnailKey='{thumbnailKey}'");
+                    _log.info(trackingId, () => $"{state} noResizeTaskIsThere={noResizeTaskIsThere}");
 
                     if (noResizeTaskIsThere)
-                        _async.WaitFor(thumbnailKey, resizeImage(image, request.Width, request.Height));
+                        _async.WaitFor(thumbnailKey, resizeImage(request, image));
 
                     return false;
 
@@ -119,7 +146,7 @@ namespace ThumbnailSrv
                     _cache.Put(thumbnailKey, image);
                     request.Srv.EndWith(image);
 
-                    _log.info(trackingId, () => $"{state}: thumbnailKey='{thumbnailKey}'");
+                    _log.info(trackingId, () => $"{state}");
 
                     return true;
 

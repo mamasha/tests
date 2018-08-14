@@ -8,6 +8,7 @@ namespace ThumbnailSrv
     {
         void info(string trackingId, string topic, Func<string> getMsg, Func<object> getDetails = null);
         void error(string trackingId, string topic, Exception error, string errMsg = null, Func<object> getDetails = null);
+        string[] GetMessages();
         object Dump();
     }
 
@@ -71,6 +72,14 @@ namespace ThumbnailSrv
             }
         }
 
+        private Item[] getItems()
+        {
+            lock (this)
+            {
+                return _que.ToArray();
+            }
+        }
+
         private void push(string severity, string trackingId, string topic, Exception error, 
             Func<string> getMsg, Func<object> getDetails)
         {
@@ -103,7 +112,7 @@ namespace ThumbnailSrv
             }
 
             var item = new Item {
-                Severity = "I",
+                Severity = severity,
                 TrackingId = trackingId,
                 Topic = topic,
                 Msg = msg,
@@ -114,26 +123,23 @@ namespace ThumbnailSrv
             enqueue(item);
         }
 
-        private static object formatMsg(Item item)
+        private static string formatMsg(Item item)
         {
             var msg = item.Msg ?? item.Error?.Message ?? "n/a";
 
+            return
+                $"{item.Severity} {item.TrackingId} {item.Topic} {msg}";
+        }
+
+        private static object format(Item item)
+        {
+            var msg = formatMsg(item);
+
             return new {
-                Msg = $"{item.Severity} {item.TrackingId} {item.Topic} {msg}",
+                Msg = msg,
                 Error = item.Error?.Message,
                 Stack = item.Error?.StackTrace,
                 Details = item.Details
-            };
-        }
-
-        private static object makeDump(Item[] items)
-        {
-            var transform =
-                from item in items
-                select formatMsg(item);
-
-            return new {
-                Logger = transform.ToArray()
             };
         }
 
@@ -157,17 +163,29 @@ namespace ThumbnailSrv
             push("E", trackingId, topic, error, () => errMsg, getDetails);
         }
 
-        object ILogger.Dump()
+        string[] ILogger.GetMessages()
         {
-            Item[] items;
+            var items = getItems();
 
-            lock (this)
-            {
-                items = _que.Reverse().ToArray();
-            }
+            var transform =
+                from item in items
+                select formatMsg(item);
 
             return
-                makeDump(items);
+                transform.ToArray();
+        }
+
+        object ILogger.Dump()
+        {
+            var items = getItems();
+
+            var transform =
+                from item in items
+                select format(item);
+
+            return new {
+                Logger = transform.ToArray()
+            };
         }
 
         #endregion

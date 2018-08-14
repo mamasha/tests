@@ -72,8 +72,16 @@ namespace ThumbnailSrv
 
         void ISrvRequest.EndWith(Exception error)
         {
-            _handler.WriteResponse(new AnyResponse { Error = error });
-            _handler.NotifyCompletion();
+            try
+            {
+                _handler.WriteResponse(new AnyResponse { Error = error });
+                _handler.NotifyCompletion();
+            }
+            catch
+            {
+                // it is possible that EndRequest with error will be called more than one time
+                // nothing to do here
+            }
         }
 
         #endregion

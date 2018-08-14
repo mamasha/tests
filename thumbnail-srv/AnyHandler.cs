@@ -83,8 +83,11 @@ namespace ThumbnailSrv
 
         private void startRequest(ISrvRequest request)
         {
+            var log = Logger.Instance;
             var http = request.Http.Request;
             var api = Api.Instance;
+
+            log.info(request.TrackingId, "anyhandler", () => $"starting request '{http.Path}'");
 
             switch (request.Route)
             {
@@ -100,6 +103,12 @@ namespace ThumbnailSrv
                     break;
                 }
                 case "/log": {
+                    var msgs = log.GetMessages();
+                    writeResponse(new AnyResponse { Json = msgs.ToJson() });
+                    endRequest();
+                    break;
+                }
+                case "/log/detailed": {
                     var dump = Logger.Instance.Dump();
                     writeResponse(new AnyResponse { Json = dump.ToJson() });
                     endRequest();
