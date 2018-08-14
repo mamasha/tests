@@ -86,10 +86,10 @@
     <None Include="packages.config" />
     <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
     <Content Include="unit\web.config" />
+    <Content Include="readme.md" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="assets\" />
-    <Folder Include="docs\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

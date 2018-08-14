@@ -93,22 +93,6 @@ namespace ThumbnailSrv
                 Width = width,
                 Height = height
             });
-
-/*
-            if (url != "http://thumbnail.src/test.jpg")
-            {
-                var errMsg = $"{trackingId} - '{url}' is not found";
-                var bytes = _helpers.TextToImage(width, height, errMsg);
-                _log.error(trackingId, errMsg);
-                request.EndWith(bytes);
-                return;
-            }
-
-            var path = http.MapPath("assets/demon.jpg");
-            var image = File.ReadAllBytes(path);
-
-            request.EndWith(image);
-*/
         }
 
         #endregion

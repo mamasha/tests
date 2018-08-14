@@ -1,3 +1,0 @@
-The major cause of spaghetti code, IMHO, not the lack of technical skills of a programmer, but wrong decomposition of a problem domain into properly decoupled concerns which then may become lego blocks to form any solution within that problem domain.
-
-Programming to interface has implementation benefits on its own. But its real glory is expressing the building blocks of a problem domain in a short and concise way. With interfaces it is a matter of seconds to see if a class represents a decoupled concern and stands for the SOLID principles.
