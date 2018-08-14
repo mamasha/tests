@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,36 +26,54 @@ namespace ThumbnailSrv
         private readonly ITopicLogger _log;
         private readonly ILocalCache<byte[]> _cache;
         private readonly IAsyncFlow<byte[]> _async;
+        private readonly WebClient _web;
+        private readonly IImageUtilities _helpers;
 
         #endregion
 
         #region construction
 
-        public static IThumbnailOp New(ILocalCache<byte[]> cache)
+        public static IThumbnailOp New(ILocalCache<byte[]> cache, IAsyncFlow<byte[]> async)
         {
             return
-                new ThumbnailOp(cache);
+                new ThumbnailOp(cache, async);
         }
 
-        private ThumbnailOp(ILocalCache<byte[]> cache)
+        private ThumbnailOp(ILocalCache<byte[]> cache, IAsyncFlow<byte[]> async)
         {
             _log = TopicLogger.New("thumbnail-op");
             _cache = cache;
+            _async = async;
+            _web = new WebClient();
+            _helpers = ImageUtilities.New();
         }
 
         #endregion
 
         #region private
 
-        private void handleError(ThumbnailRequest request, string key, Exception error)
+        private Task<byte[]> downloadImage(string url)
         {
-            _log.error(request.Srv.TrackingId, error, $"While waiting for '{key}' key");
+            return Task.Run( 
+                () => _web.DownloadData(url));
         }
 
-        private bool runStateMachine(string state, ThumbnailRequest request, byte[] image = null)
+        private Task<byte[]> resizeImage(byte[] image, int width, int height)
         {
-            void onError(string key, Exception error) =>
-                handleError(request, key, error);
+            return Task.Run(
+                () => _helpers.TextToImage(width, height, $"{width}x{height} thumbnail is ready"));
+        }
+
+        private bool runStateMachine(string state, ThumbnailRequest request, byte[] image = null, Exception error = null)
+        {
+            var trackingId = request.Srv.TrackingId;
+
+            if (error != null)
+            {
+                _log.info(trackingId, () => $"Error on state '{state}'; {error.Message}");
+                request.Srv.EndWith(error);
+                return true;
+            }
 
             var thumbnailKey = request.Key;
             var downloadKey = request.Url;
@@ -64,39 +83,44 @@ namespace ThumbnailSrv
                 case null:
                 case "":
                 case "start":
-                    var thumbnailItem = _cache.Get(thumbnailKey);
+                    var (thumbnail, firstTouch) = _cache.Get(thumbnailKey);
 
-                    if (thumbnailItem.Value != null)
-                        return runStateMachine("thumbnail-ready", request, thumbnailItem.Value);
+                    var cacheHit = thumbnail != null;
+
+                    _log.info(trackingId, () => $"{state}: firstTouch={firstTouch}, cacheHit={cacheHit}, downloadKey='{downloadKey}'");
+
+                    if (cacheHit)
+                        return runStateMachine("thumbnail-ready", request, thumbnail);
 
                     _async.WhenReady(downloadKey,
-                        bytes => runStateMachine("download-ready", request, bytes));
+                        (bytes, ex) => runStateMachine("download-ready", request, bytes, ex));
 
-                    _async.WhenReady(thumbnailKey,
-                        bytes => runStateMachine("thumbnail-ready", request, bytes));
-
-                    if (thumbnailItem.State == CacheState.New)
-                    {
-                        Task<byte[]> downloadTask = null;
-                        _async.Signal(downloadKey, downloadTask, onError);
-                    }
+                    if (firstTouch)
+                        _async.WaitFor(downloadKey, downloadImage(request.Url));
 
                     return false;
 
                 case "download-ready":
                     _cache.Put(downloadKey, image);
 
-                    if (_async.RegisterSignal(thumbnailKey))
-                    {
-                        Task<byte[]> thumbnailTask = null;
-                        _async.Signal(thumbnailKey, thumbnailTask, onError);
-                    }
+                    _async.WhenReady(thumbnailKey,
+                        (bytes, ex) => runStateMachine("thumbnail-ready", request, bytes, ex));
+
+                    var noResizeTaskIsThere = _async.TouchPoint(thumbnailKey);
+
+                    _log.info(trackingId, () => $"{state}: noResizeTaskIsThere={noResizeTaskIsThere}, thumbnailKey='{thumbnailKey}'");
+
+                    if (noResizeTaskIsThere)
+                        _async.WaitFor(thumbnailKey, resizeImage(image, request.Width, request.Height));
 
                     return false;
 
                 case "thumbnail-ready":
                     _cache.Put(thumbnailKey, image);
                     request.Srv.EndWith(image);
+
+                    _log.info(trackingId, () => $"{state}: thumbnailKey='{thumbnailKey}'");
+
                     return true;
 
                 default:

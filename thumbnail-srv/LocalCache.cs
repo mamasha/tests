@@ -3,29 +3,10 @@ using System.Collections.Generic;
 
 namespace ThumbnailSrv
 {
-    public enum CacheState
-    {
-        New, Pending, Ready
-    }
-
-    class CacheItem<T>
-        where T: class
-    {
-        public string Key { get; }
-        public CacheState State { get; set; }
-        public T Value { get; set; }
-
-        public CacheItem(string key)
-        {
-            Key = key;
-        }
-    }
-
     interface ILocalCache<T>
         where T: class
     {
-        (T, bool) Get2(string key);
-        CacheItem<T> Get(string key);
+        (T, bool) Get(string key);
         void Put(string key, T value);
     }
 
@@ -56,23 +37,18 @@ namespace ThumbnailSrv
 
         #region interface
 
-        CacheItem<T> ILocalCache<T>.Get(string key)
+        (T, bool) ILocalCache<T>.Get(string key)
         {
-            var item = new CacheItem<T>(key);
-
-            if (!_db.TryGetValue(key, out T value))
+            if (_db.TryGetValue(key, out T value))
             {
-                item.State = CacheState.New;
-                _db.Add(key, null);
-                return item;
+                return
+                    (value, false);
             }
 
-            item.Value = value;
+            _db.Add(key, null);
 
-            item.State =
-                value != null ? CacheState.Ready : CacheState.Pending;
-
-            return item;
+            return 
+                (null, true);
         }
 
         void ILocalCache<T>.Put(string key, T value)
@@ -92,7 +68,7 @@ namespace ThumbnailSrv
         public static ILocalCache<T> New(ILocalCache<T> peer) { return new SyncedLocalCache<T>(peer); }
         private SyncedLocalCache(ILocalCache<T> peer) { _peer = peer; }
 
-        CacheItem<T> ILocalCache<T>.Get(string key) { lock(_mutex) return _peer.Get(key); }
+        (T, bool) ILocalCache<T>.Get(string key) { lock(_mutex) return _peer.Get(key); }
         void ILocalCache<T>.Put(string key, T value) { lock (_mutex) _peer.Put(key, value); }
     }
 }

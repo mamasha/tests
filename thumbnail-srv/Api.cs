@@ -46,8 +46,13 @@ namespace ThumbnailSrv
 
         private Api(Config config)
         {
+            var log = Logger.Instance;
+            var cache = LocalCache<byte[]>.New();
+            var async = AsyncFlow<byte[]>.New(log);
+
             _helpers = ImageUtilities.New();
-            _log = TopicLogger.New("api");
+            _log = TopicLogger.New("api", log);
+            _thumbnail = ThumbnailOp.New(cache, async);
             _config = config;
         }
 

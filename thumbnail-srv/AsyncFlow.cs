@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ThumbnailSrv
 {
-    delegate void OnSuccess<T>(T value);
-    delegate void OnError(string key, Exception error);
+    delegate void OnReady<T>(T value, Exception error);
 
     interface IAsyncFlow<T>
         where T: class
     {
-        void WhenReady(string key, OnSuccess<T> onSuccess);
-        bool TouchSignal(string key);
-        void Signal(string key, Task<T> task, OnError onError);
+        bool TouchPoint(string key);
+        void WhenReady(string key, OnReady<T> onReady);
+        void WaitFor(string key, Task<T> task);
         void DoneWith(string key);
     }
 
@@ -23,12 +24,13 @@ namespace ThumbnailSrv
 
         class ExecutionPoint
         {
-            public Queue<OnSuccess<T>> Que { get; set; }
+            public Queue<OnReady<T>> Que { get; set; }
             public T Value { get; set; }
-            public bool IsRegistered { get; set; }
-            public OnError ErrorHandler { get; set; }
+            public Exception Error { get; set; }
+            public int TouchCount;
         }
 
+        private readonly ILogger _log;
         private readonly Dictionary<string, ExecutionPoint> _db;
 
         #endregion
@@ -39,14 +41,15 @@ namespace ThumbnailSrv
 
         #region construction
 
-        public static IAsyncFlow<T> New()
+        public static IAsyncFlow<T> New(ILogger log)
         {
             return 
-                new AsyncFlow<T>();
+                new AsyncFlow<T>(log);
         }
 
-        private AsyncFlow()
+        private AsyncFlow(ILogger log)
         {
+            _log = log;
             _db = new Dictionary<string, ExecutionPoint>(StringComparer.InvariantCultureIgnoreCase);
         }
 
@@ -56,51 +59,133 @@ namespace ThumbnailSrv
 
         private ExecutionPoint getMyPoint(string key)
         {
-            if (_db.TryGetValue(key, out var point))
+            lock (_db)
+            {
+                if (_db.TryGetValue(key, out var point))
+                    return point;
+
+                point = new ExecutionPoint {
+                    Que = new Queue<OnReady<T>>()
+                };
+
+                _db.Add(key, point);
+
                 return point;
-
-            point = new ExecutionPoint {
-                Que = new Queue<OnSuccess<T>>()
-            };
-
-            _db.Add(key, point);
-
-            return point;
+            }
         }
 
-        void signal(string key)
+        private void invoke(OnReady<T> onReady, T value, Exception error)
         {
-            
+            try
+            {
+                onReady(value, error);
+            }
+            catch (Exception ex)
+            {
+                _log.error("--.--.--", "async-flow", ex, "While executing onReady callback");
+            }
+        }
+
+        private void enqueue(ExecutionPoint point, OnReady<T> onReady)
+        {
+            T value;
+            Exception error;
+
+            for (;;)
+            {
+                lock (point)
+                {
+                    value = point.Value;
+                    error = point.Error;
+
+                    if (value != null)
+                        break;
+
+                    if (error != null)
+                        break;
+
+                    point.Que.Enqueue(onReady);
+                    return;
+                }
+            }
+
+            invoke(onReady, value, error);
+        }
+
+        private void complete(ExecutionPoint point, T value, Exception error)
+        {
+            Trace.Assert(value != null || error != null);
+
+            OnReady<T>[] handlers;
+
+            lock (point)
+            {
+                point.Value = value;
+                point.Error = error;
+
+                handlers = point.Que.ToArray();
+                point.Que.Clear();
+            }
+
+            foreach (var onReady in handlers)
+            {
+                invoke(onReady, value, error);
+            }
         }
 
         #endregion
 
         #region interface
 
-        void IAsyncFlow<T>.WhenReady(string key, OnSuccess<T> onSuccess)
+        bool IAsyncFlow<T>.TouchPoint(string key)
         {
             var point = getMyPoint(key);
 
-            if (point.Value != null)
+            var touchCount = Interlocked.Increment(ref point.TouchCount);
+
+            return
+                touchCount == 1;        // return true on first touch
+        }
+
+        void IAsyncFlow<T>.WhenReady(string key, OnReady<T> onReady)
+        {
+            var point = getMyPoint(key);
+            var value = point.Value;
+
+            if (value != null)
             {
-                onSuccess(point.Value);
+                invoke(onReady, value, null);
                 return;
             }
 
-            point.Que.Enqueue(onSuccess);
+            enqueue(point, onReady);
         }
 
-        bool IAsyncFlow<T>.RegisterSignal(string key)
+        void IAsyncFlow<T>.WaitFor(string key, Task<T> task)
         {
             var point = getMyPoint(key);
-            var firstRegistration = !point.IsRegistered;
 
-            point.IsRegistered = true;
+            void signal(Task<T> completed)
+            {
+                try
+                {
+                    var value = completed.Result;
+                    Trace.Assert(value != null);
+
+                    complete(point, value, null);
+                }
+                catch (Exception ex)
+                {
+                    _log.info("--.--.--", "async-flow", () => $"{key}: task was completed with error; {ex.Message}");
+                    complete(point, null, ex);
+                }
+            }
+
+            task.ContinueWith(signal);
         }
 
-        void IAsyncFlow<T>.Signal(string key, Task<T> task, OnError onError)
+        void IAsyncFlow<T>.DoneWith(string key)
         {
-            task.ContinueWith(_ => signal(key));
         }
 
         #endregion
