@@ -26,7 +26,6 @@ namespace ThumbnailSrv
         private readonly ITopicLogger _log;
         private readonly ILocalCache<byte[]> _cache;
         private readonly IAsyncFlow<byte[]> _async;
-        private readonly WebClient _web;
         private readonly IImageUtilities _helpers;
 
         #endregion
@@ -41,11 +40,12 @@ namespace ThumbnailSrv
 
         private ThumbnailOp(ILocalCache<byte[]> cache, IAsyncFlow<byte[]> async)
         {
-            _log = TopicLogger.New("thumbnail-op");
+            var log = TopicLogger.New("thumbnail-op");
+
+            _log = log;
             _cache = cache;
             _async = async;
-            _web = new WebClient();
-            _helpers = ImageUtilities.New();
+            _helpers = ImageUtilities.New(log);
         }
 
         #endregion
@@ -61,8 +61,12 @@ namespace ThumbnailSrv
                 try
                 {
                     _log.info(trackingId, () => $"Downloading '{url}'");
-                    return
-                        _web.DownloadData(url);
+
+                    using (var web = new WebClient())
+                    {
+                        return
+                            web.DownloadData(url);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -83,9 +87,22 @@ namespace ThumbnailSrv
 
             byte[] resize()
             {
-                _log.info(trackingId, () => $"Resizing to {width}x{height} jpeg");
-                return
-                    _helpers.ResizeImage(image, width, height);
+                try
+                {
+                    _log.info(trackingId, () => $"Resizing to {width}x{height} jpeg");
+                    var bytes = _helpers.ResizeImage(trackingId, image, width, height);
+
+                    if (bytes == null)
+                        throw new ApplicationException($"'{request.Url}' probably is not an image");
+
+                    return bytes;
+                }
+                catch (Exception ex)
+                {
+                    _log.error(trackingId, ex, $"Failed to resize an image ({ex.Message})");
+                    return
+                        _helpers.TextToImage(request.Width, request.Height, ex.Message);
+                }
             }
 
             return Task.Run(() => resize());

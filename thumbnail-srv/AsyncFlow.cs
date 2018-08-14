@@ -41,10 +41,10 @@ namespace ThumbnailSrv
 
         #region construction
 
-        public static IAsyncFlow<T> New(ILogger log)
+        public static IAsyncFlow<T> New(ILogger log = null)
         {
             return 
-                new AsyncFlow<T>(log);
+                new AsyncFlow<T>(log ?? Logger.Instance);
         }
 
         private AsyncFlow(ILogger log)

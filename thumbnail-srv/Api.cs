@@ -31,9 +31,7 @@ namespace ThumbnailSrv
 
         #region members
 
-        private readonly IImageUtilities _helpers;
         private readonly ITopicLogger _log;
-
         private readonly IThumbnailOp _thumbnail;
 
         private Config _config;
@@ -46,12 +44,10 @@ namespace ThumbnailSrv
 
         private Api(Config config)
         {
-            var log = Logger.Instance;
             var cache = LocalCache<byte[]>.New();
-            var async = AsyncFlow<byte[]>.New(log);
+            var async = AsyncFlow<byte[]>.New();
 
-            _helpers = ImageUtilities.New();
-            _log = TopicLogger.New("api", log);
+            _log = TopicLogger.New("api");
             _thumbnail = ThumbnailOp.New(cache, async);
             _config = config;
         }
