@@ -40,7 +40,7 @@ As a result of such a state machine each remote image is downloaded only once. A
 
 No blocking waits. An image re-sampling is done by a background thread.
 
-The real gem of this project is AsyncFlow class. I have been thinking about various asynchronous programming models many years. I felt like a switch statement was a very promising idea for encapsulating an asynchronous state machine within a single function. That's what AsyncFlow class is all about.
+The real gem of this project is the AsyncFlow class that facilitates implementing a concise state machine inside the ThumbnailOp class. I have been thinking about various asynchronous programming models many years. I have always felt like a switch statement is a very promising idea for encapsulating an asynchronous state machine within a single function. That's what AsyncFlow class is all about.
 
 ### Concerns encapsulation
 
