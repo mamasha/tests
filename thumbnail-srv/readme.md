@@ -1,6 +1,6 @@
 ## Thumbnail demo service
 
-Start with [unit tests page]()
+Start with [unit tests page]()  
 Then go to [Log endpoint]()
 
 
@@ -13,7 +13,7 @@ Visual Studio 2017 --> Publish to Dropbox folder --> Azure deploy from Dropbox
 
 - Resize implementation is in [ImageUtilities.cs](./ImageUtilities.cs)
 - Scaling can be seen through [ThumbnailOp.cs](./ThumbnailOp.cs) `runStateMachine()` function
-- Routing and endpoints in [AnyHandler.cs](./AnyHandler.cs) `startRequest()` function
+- Routing and endpoints are in [AnyHandler.cs](./AnyHandler.cs) `startRequest()` function
 
 ### Request flow
 
