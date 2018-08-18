@@ -11,9 +11,9 @@ namespace ThumbnailSrv
     interface IAsyncFlow<T>
         where T: class
     {
-        bool TouchPoint(string key);
         void WhenReady(string key, OnReady<T> onReady);
         void WaitFor(string key, Task<T> task);
+        void Signal(string key, T data);
         void DoneWith(string key);
     }
 
@@ -27,7 +27,6 @@ namespace ThumbnailSrv
             public Queue<OnReady<T>> Que { get; set; }
             public T Value { get; set; }
             public Exception Error { get; set; }
-            public int TouchCount;
         }
 
         private readonly ILogger _log;
@@ -137,16 +136,6 @@ namespace ThumbnailSrv
 
         #region interface
 
-        bool IAsyncFlow<T>.TouchPoint(string key)
-        {
-            var point = getMyPoint(key);
-
-            var touchCount = Interlocked.Increment(ref point.TouchCount);
-
-            return
-                touchCount == 1;        // return true on first touch
-        }
-
         void IAsyncFlow<T>.WhenReady(string key, OnReady<T> onReady)
         {
             var point = getMyPoint(key);
@@ -182,6 +171,14 @@ namespace ThumbnailSrv
             }
 
             task.ContinueWith(signal);
+        }
+
+        void IAsyncFlow<T>.Signal(string key, T data)
+        {
+            Trace.Assert(data != null);
+
+            var point = getMyPoint(key);
+            complete(point, data, null);
         }
 
         void IAsyncFlow<T>.DoneWith(string key)

@@ -7,7 +7,7 @@ namespace ThumbnailSrv
         where T: class
     {
         (T, bool) Get(string key);
-        void Put(string key, T value);
+        bool Put(string key, T value);
     }
 
     class LocalCache<T> : ILocalCache<T>
@@ -51,9 +51,12 @@ namespace ThumbnailSrv
                 (null, true);
         }
 
-        void ILocalCache<T>.Put(string key, T value)
+        bool ILocalCache<T>.Put(string key, T value)
         {
+            var firstTouch = !_db.ContainsKey(key);
             _db[key] = value;
+
+            return firstTouch;
         }
 
         #endregion
@@ -69,6 +72,6 @@ namespace ThumbnailSrv
         private SyncedLocalCache(ILocalCache<T> peer) { _peer = peer; }
 
         (T, bool) ILocalCache<T>.Get(string key) { lock(_mutex) return _peer.Get(key); }
-        void ILocalCache<T>.Put(string key, T value) { lock (_mutex) _peer.Put(key, value); }
+        bool ILocalCache<T>.Put(string key, T value) { lock (_mutex) return _peer.Put(key, value); }
     }
 }

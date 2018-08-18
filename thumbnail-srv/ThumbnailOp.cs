@@ -128,7 +128,7 @@ namespace ThumbnailSrv
             {
                 case null:
                 case "":
-                case "start":
+                case "start": {
                     var (thumbnail, firstTouch) = _cache.Get(thumbnailKey);
 
                     var cacheHit = thumbnail != null;
@@ -145,30 +145,29 @@ namespace ThumbnailSrv
                         _async.WaitFor(downloadKey, downloadImage(request, request.Url));
 
                     return false;
+                }
+                case "download-ready": {
+                    var firstTouch = _cache.Put(downloadKey, image);
 
-                case "download-ready":
-                    _cache.Put(downloadKey, image);
+                    _log.info(trackingId, () => $"{state} firstTouch={firstTouch}");
 
                     _async.WhenReady(thumbnailKey,
                         (bytes, ex) => runStateMachine("thumbnail-ready", request, bytes, ex));
 
-                    var noResizeTaskIsThere = _async.TouchPoint(thumbnailKey);
-
-                    _log.info(trackingId, () => $"{state} noResizeTaskIsThere={noResizeTaskIsThere}");
-
-                    if (noResizeTaskIsThere)
+                    if (firstTouch)
                         _async.WaitFor(thumbnailKey, resizeImage(request, image));
 
                     return false;
-
-                case "thumbnail-ready":
+                }
+                case "thumbnail-ready": {
                     _cache.Put(thumbnailKey, image);
+
                     request.Srv.EndWith(image);
 
                     _log.info(trackingId, () => $"{state}");
 
                     return true;
-
+                }
                 default:
                     throw new Exception("Should not get here");
             }
