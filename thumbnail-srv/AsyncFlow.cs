@@ -12,7 +12,7 @@ namespace ThumbnailSrv
         where T: class
     {
         void WhenReady(string key, OnReady<T> onReady);
-        void WaitFor(string key, Task<T> task);
+        void Start(string key, Task<T> task);
         void Signal(string key, T data);
         void DoneWith(string key);
     }
@@ -150,7 +150,7 @@ namespace ThumbnailSrv
             enqueue(point, onReady);
         }
 
-        void IAsyncFlow<T>.WaitFor(string key, Task<T> task)
+        void IAsyncFlow<T>.Start(string key, Task<T> task)
         {
             var point = getMyPoint(key);
 

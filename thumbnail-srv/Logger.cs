@@ -9,6 +9,7 @@ namespace ThumbnailSrv
         void info(string trackingId, string topic, Func<string> getMsg, Func<object> getDetails = null);
         void error(string trackingId, string topic, Exception error, string errMsg = null, Func<object> getDetails = null);
         string[] GetMessages();
+        void Clear();
         object Dump();
     }
 
@@ -77,6 +78,14 @@ namespace ThumbnailSrv
             lock (this)
             {
                 return _que.ToArray();
+            }
+        }
+
+        private void clearItems()
+        {
+            lock (this)
+            {
+                _que.Clear();
             }
         }
 
@@ -173,6 +182,11 @@ namespace ThumbnailSrv
 
             return
                 transform.ToArray();
+        }
+
+        void ILogger.Clear()
+        {
+            clearItems();
         }
 
         object ILogger.Dump()

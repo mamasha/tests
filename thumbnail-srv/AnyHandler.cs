@@ -109,8 +109,14 @@ namespace ThumbnailSrv
                     break;
                 }
                 case "/log/detailed": {
-                    var dump = Logger.Instance.Dump();
+                    var dump = log.Dump();
                     writeResponse(new AnyResponse { Json = dump.ToJson() });
+                    endRequest();
+                    break;
+                }
+                case "/log/clear": {
+                    log.Clear();
+                    writeResponse(new AnyResponse { Json = "{}" });
                     endRequest();
                     break;
                 }

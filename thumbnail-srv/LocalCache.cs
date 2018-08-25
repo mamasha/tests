@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ThumbnailSrv
 {
@@ -7,7 +8,7 @@ namespace ThumbnailSrv
         where T: class
     {
         (T, bool) Get(string key);
-        bool Put(string key, T value);
+        void Put(string key, T value);
     }
 
     class LocalCache<T> : ILocalCache<T>
@@ -41,22 +42,19 @@ namespace ThumbnailSrv
         {
             if (_db.TryGetValue(key, out T value))
             {
-                return
-                    (value, false);
+                return (value, false);
             }
 
             _db.Add(key, null);
 
-            return 
-                (null, true);
+            return (null, true);
         }
 
-        bool ILocalCache<T>.Put(string key, T value)
+        void ILocalCache<T>.Put(string key, T value)
         {
-            var firstTouch = !_db.ContainsKey(key);
-            _db[key] = value;
+            Trace.Assert(value != null);
 
-            return firstTouch;
+            _db[key] = value;
         }
 
         #endregion
@@ -72,6 +70,6 @@ namespace ThumbnailSrv
         private SyncedLocalCache(ILocalCache<T> peer) { _peer = peer; }
 
         (T, bool) ILocalCache<T>.Get(string key) { lock(_mutex) return _peer.Get(key); }
-        bool ILocalCache<T>.Put(string key, T value) { lock (_mutex) return _peer.Put(key, value); }
+        void ILocalCache<T>.Put(string key, T value) { lock (_mutex) _peer.Put(key, value); }
     }
 }
