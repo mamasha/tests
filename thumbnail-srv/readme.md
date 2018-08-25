@@ -11,9 +11,11 @@ Visual Studio 2017 --> Publish to Dropbox folder --> Azure deploy from Dropbox
 
 ### Sources - points of interest
 
-- Resize implementation is in [ImageUtilities.cs](./ImageUtilities.cs)
+- Resizing math is implementated in [ResizeMath.cs](./ResizeMath.cs) unit tests are in [ResizeMathTests.cs](./_nunit/ResizeMathTests.cs)
 - Service scaling in production can be seen through [ThumbnailOp.cs](./ThumbnailOp.cs) `runStateMachine()` function
 - Routing and endpoints are in [AnyHandler.cs](./AnyHandler.cs) `startRequest()` function
+- Unit tests are in folder [_nunit](./_nunit)
+- Integration tests are in [IntegrationlTests.cs](./../thumbnail-srv-tests/IntegrationlTests.cs)
 
 ### Request flow
 
@@ -21,6 +23,12 @@ Visual Studio 2017 --> Publish to Dropbox folder --> Azure deploy from Dropbox
 [Api.cs](./Api.cs)  -->
 [ThumbnailOp.cs](./ThumbnailOp.cs)  -->
 [ImageUtilities.cs](./ImageUtilities.cs)
+
+### Unit and integration tests
+
+- Unit tests are implemented in folder [_nunit](./_nunit)
+- Integration tests are implemented in a satellite project [thumbnail-srv-tests](./../thumbnail-srv-tests)
+- NUnit framework is used
 
 ### Thoughts on implementation
 
