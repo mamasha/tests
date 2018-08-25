@@ -7,7 +7,7 @@ namespace thumbnail_srv_tests
         public static int Main(string[] args)
         {
             IntegrationlTests.Config = new TestConfig {
-                BaseUrl = "127.0.0.1"
+                BaseUrl = "https://thumbnail-srv.azurewebsites.net"
             };
 
             return 
