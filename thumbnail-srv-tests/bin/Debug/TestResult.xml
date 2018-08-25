@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" name="thumbnail-srv-tests.exe" fullname="C:/github/tests/thumbnail-srv-tests/bin/Debug/thumbnail-srv-tests.exe" testcasecount="1" result="Passed" start-time="2018-08-24 15:12:52Z" end-time="2018-08-24 15:12:52Z" duration="0.046230" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" random-seed="1443175929">
+  <command-line><![CDATA["C:\github\tests\thumbnail-srv-tests\bin\Debug\thumbnail-srv-tests.exe"   ]]></command-line>
+  <filter />
+  <test-suite type="Assembly" id="1002" name="thumbnail-srv-tests.exe" fullname="C:/github/tests/thumbnail-srv-tests/bin/Debug/thumbnail-srv-tests.exe" runstate="Runnable" testcasecount="1" result="Passed" start-time="2018-08-24 15:12:52Z" end-time="2018-08-24 15:12:52Z" duration="0.046230" total="1" passed="1" failed="0" warnings="0" inconclusive="0" skipped="0" asserts="0">
+    <environment framework-version="3.10.1.0" clr-version="4.0.30319.42000" os-version="Microsoft Windows NT 10.0.17134" platform="Win32NT" cwd="C:\github\tests\thumbnail-srv-tests\bin\Debug" machine-name="ORANGE" user="Reuven Bass" user-domain="ORANGE" culture="en-US" uiculture="en-US" os-architecture="x86" />
+    <settings>
+      <setting name="WorkDirectory" value="C:\github\tests\thumbnail-srv-tests\bin\Debug" />
+      <setting name="NumberOfTestWorkers" value="4" />
+    </settings>
+    <properties>
+      <property name="_PID" value="21260" />
+      <property name="_APPDOMAIN" value="thumbnail-srv-tests.exe" />
+    </properties>
+    <test-suite type="TestSuite" id="1003" name="thumbnail_srv_tests" fullname="thumbnail_srv_tests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2018-08-24 15:12:52Z" end-time="2018-08-24 15:12:52Z" duration="0.034727" total="1" passed="1" failed="0" warnings="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1000" name="ThumbnailTests" fullname="thumbnail_srv_tests.ThumbnailTests" classname="thumbnail_srv_tests.ThumbnailTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2018-08-24 15:12:52Z" end-time="2018-08-24 15:12:52Z" duration="0.030268" total="1" passed="1" failed="0" warnings="0" inconclusive="0" skipped="0" asserts="0">
+        <test-case id="1001" name="ATest" fullname="thumbnail_srv_tests.ThumbnailTests.ATest" methodname="ATest" classname="thumbnail_srv_tests.ThumbnailTests" runstate="Runnable" seed="53839523" result="Passed" start-time="2018-08-24 15:12:52Z" end-time="2018-08-24 15:12:52Z" duration="0.022385" asserts="0" />
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

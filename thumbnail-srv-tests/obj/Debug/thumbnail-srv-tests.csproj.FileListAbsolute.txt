@@ -1,0 +1,15 @@
+C:\github\tests\thumbnail-srv-tests\bin\Debug\thumbnail-srv-tests.exe.config
+C:\github\tests\thumbnail-srv-tests\bin\Debug\thumbnail-srv-tests.exe
+C:\github\tests\thumbnail-srv-tests\bin\Debug\thumbnail-srv-tests.pdb
+C:\github\tests\thumbnail-srv-tests\obj\Debug\thumbnail-srv-tests.csprojAssemblyReference.cache
+C:\github\tests\thumbnail-srv-tests\obj\Debug\thumbnail-srv-tests.csproj.CoreCompileInputs.cache
+C:\github\tests\thumbnail-srv-tests\obj\Debug\thumbnail-srv-tests.exe
+C:\github\tests\thumbnail-srv-tests\obj\Debug\thumbnail-srv-tests.pdb
+C:\github\tests\thumbnail-srv-tests\bin\Debug\Newtonsoft.Json.dll
+C:\github\tests\thumbnail-srv-tests\bin\Debug\nunit.framework.dll
+C:\github\tests\thumbnail-srv-tests\bin\Debug\Newtonsoft.Json.xml
+C:\github\tests\thumbnail-srv-tests\bin\Debug\nunit.framework.pdb
+C:\github\tests\thumbnail-srv-tests\bin\Debug\nunit.framework.xml
+C:\github\tests\thumbnail-srv-tests\obj\Debug\thumbnail-srv-tests.csproj.CopyComplete
+C:\github\tests\thumbnail-srv-tests\bin\Debug\nunitlite.dll
+C:\github\tests\thumbnail-srv-tests\bin\Debug\nunitlite.pdb
