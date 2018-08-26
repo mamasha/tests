@@ -37,6 +37,29 @@ namespace ThumbnailSrv
 
         #region private
 
+        private void fillMargins(Graphics graphics, int dx, int dy, Rectangle core, Brush brush)
+        {
+            var sameDims =
+                core.Width == dx && core.Height == dy;
+
+            if (sameDims)
+                return;
+
+            var x1 = core.Left;
+            var x2 = x1 + core.Width;
+            var y1 = core.Top;
+            var y2 = y1 + core.Height;
+
+            var margins = new[] {
+                new Rectangle(0, 0, dx, y1),
+                new Rectangle(0, y2, dx, dy - y2),
+                new Rectangle(0, y1, x1, y2 - y1),
+                new Rectangle(x2, y1, dx - x2, y2 - y1)
+            };
+
+            graphics.FillRectangles(brush, margins);
+        }
+
         private Bitmap resizeImageToBitmap(string trackingId, Image image, int width, int height)
         {
             var innerRect = ResizeMath.KeepRatio(image.Width, image.Height, width, height);
@@ -60,6 +83,8 @@ namespace ThumbnailSrv
                     wrapMode.SetWrapMode(WrapMode.TileFlipXY);
                     graphics.DrawImage(image, innerRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
                 }
+
+                fillMargins(graphics, width, height, innerRect, Brushes.Black);
             }
 
             return destImage;

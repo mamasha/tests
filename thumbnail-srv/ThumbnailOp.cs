@@ -125,22 +125,11 @@ namespace ThumbnailSrv
                 return handleError(state, request, error);
 
             var trackingId = request.Srv.TrackingId;
-            var thumbnailKey = request.Key;
             var downloadKey = request.Url;
+            var thumbnailKey = request.Key;
 
             switch (state)
             {
-                case "start": {
-                    var (thumbnail, firstTouch) = _cache.Get(thumbnailKey);
-                    var cacheHit = thumbnail != null;
-
-                    _log.info(trackingId, () => $"{state} firstTouch={firstTouch}, cacheHit={cacheHit}");
-
-                    if (cacheHit)
-                        return runStateMachine("thumbnail-ready", request, thumbnail);
-
-                    return runStateMachine("download-start", request);
-                }
                 case "download-start": {
                     var (download, firstTouch) = _cache.Get(downloadKey);
                     var cacheHit = download != null;

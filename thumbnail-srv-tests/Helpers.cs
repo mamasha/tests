@@ -32,7 +32,7 @@ namespace thumbnail_srv_tests
                             byte green = p[1];
                             byte red = p[2];
 
-                            if (blue < 40 && green < 40 && red < 40)
+                            if (blue < 10 || green < 10 || red < 10)
                             {
                                 blue = green = red = 0;
                             }
