@@ -13,32 +13,52 @@ namespace ascii_to_numbers
 
     class AsciiNumber : IAsciiNumber
     {
+        #region config
+
+        public class Config
+        {
+            public int NoOfDigits { get; set; }
+            public char[][] ValidChars { get; set; }
+            public int[] DigitCodes { get; set; }
+        }
+
+        #endregion
+
         #region members
 
-        private readonly int _noOfDigits;
+        private readonly Config _config;
         private readonly int _lineNo;
-        private readonly IAsiiDigit[] _digits;
+        private readonly IAsiiPattern[] _patterns;
 
         #endregion
 
         #region construction
 
-        public static IAsciiNumber New(int noOfDigits, int lineNo)
+        public static IAsciiNumber New(Config config, int lineNo)
         {
             return
-                new AsciiNumber(noOfDigits, lineNo);
+                new AsciiNumber(config, lineNo);
         }
 
-        private AsciiNumber(int noOfDigits, int lineNo)
+        private AsciiNumber(Config config, int lineNo)
         {
-            _noOfDigits = noOfDigits;
+            _config = config;
             _lineNo = lineNo;
-            _digits = new IAsiiDigit[noOfDigits];
+            _patterns = new IAsiiPattern[config.NoOfDigits];
 
-            for (int i = 0; i < noOfDigits; i++)
+            for (int i = 0; i < config.NoOfDigits; i++)
             {
-                _digits[i] = AsciiDigit.New();
+                _patterns[i] = AsciiPattern.New(config.ValidChars);
             }
+        }
+
+        #endregion
+
+        #region private
+
+        private string recognize(int code)
+        {
+            return "?";
         }
 
         #endregion
@@ -49,9 +69,9 @@ namespace ascii_to_numbers
         {
             get
             {
-                foreach (var digit in _digits)
+                foreach (var pattern in _patterns)
                 {
-                    if (!digit.IsValid)
+                    if (!pattern.IsValid)
                         return false;
                 }
 
@@ -65,9 +85,11 @@ namespace ascii_to_numbers
             {
                 var sb = new StringBuilder();
 
-                foreach (var digit in _digits)
+                foreach (var pattern in _patterns)
                 {
-                    sb.Append(digit.ParsedDigit);
+                    var code = pattern.Code;
+                    var digit = recognize(code);
+                    sb.Append(digit);
                 }
 
                 return sb.ToString();
@@ -76,18 +98,18 @@ namespace ascii_to_numbers
 
         void IAsciiNumber.PushLine(string line)
         {
-            var charCount = 3 * _noOfDigits;
+            var charCount = 3 * _config.NoOfDigits;
 
             if (line.Length < charCount)
                 throw new ApplicationException($"Not enough characters ({line.Length}) in line {_lineNo}; should be at least {charCount} characters");
 
             var next = 0;
 
-            foreach (var digit in _digits)
+            foreach (var pattern in _patterns)
             {
-                digit.PushChar(line[next++]);       // a line has groups of three characters each per digit
-                digit.PushChar(line[next++]);
-                digit.PushChar(line[next++]);
+                pattern.PushChar(line[next++]);       // a line has groups of three characters each per digit
+                pattern.PushChar(line[next++]);
+                pattern.PushChar(line[next++]);
             }
         }
 
