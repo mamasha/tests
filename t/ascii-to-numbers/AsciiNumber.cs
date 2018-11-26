@@ -7,7 +7,7 @@ namespace ascii_to_numbers
     interface IAsciiNumber
     {
         bool IsValid { get; }
-        string ParsedNumber { get; }
+        string Number { get; }
         void PushLine(string line);
     }
 
@@ -28,7 +28,7 @@ namespace ascii_to_numbers
 
         private readonly Config _config;
         private readonly int _lineNo;
-        private readonly IAsiiPattern[] _patterns;
+        private readonly IAsciiPattern[] _patterns;
 
         #endregion
 
@@ -44,7 +44,7 @@ namespace ascii_to_numbers
         {
             _config = config;
             _lineNo = lineNo;
-            _patterns = new IAsiiPattern[config.NoOfDigits];
+            _patterns = new IAsciiPattern[config.NoOfDigits];
 
             for (int i = 0; i < config.NoOfDigits; i++)
             {
@@ -58,6 +58,12 @@ namespace ascii_to_numbers
 
         private string recognize(int code)
         {
+            for (int digit = 0; digit < 10; digit++)
+            {
+                if (_config.DigitCodes[digit] == code)
+                    return digit.ToString();
+            }
+
             return "?";
         }
 
@@ -73,13 +79,18 @@ namespace ascii_to_numbers
                 {
                     if (!pattern.IsValid)
                         return false;
+
+                    var digit = recognize(pattern.Code);
+
+                    if (digit == "?")
+                        return false;
                 }
 
                 return true;
             }
         }
 
-        string IAsciiNumber.ParsedNumber
+        string IAsciiNumber.Number
         {
             get
             {
@@ -87,8 +98,7 @@ namespace ascii_to_numbers
 
                 foreach (var pattern in _patterns)
                 {
-                    var code = pattern.Code;
-                    var digit = recognize(code);
+                    var digit = recognize(pattern.Code);
                     sb.Append(digit);
                 }
 

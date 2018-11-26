@@ -7,7 +7,7 @@ namespace ascii_to_numbers
 {
     class Program
     {
-        private static readonly string[] _digitPatterns = {
+        public static readonly string[] DigitPatterns = {
             " _ " +
             "| |" +
             "|_|",
@@ -49,7 +49,7 @@ namespace ascii_to_numbers
             " _|"
         };
 
-        private static readonly char[][] _validChars = {
+        public static readonly char[][] ValidChars = {
             new[] {'|', ' '},
             new[] {'_', ' '},
             new[] {'|', ' '},
@@ -61,15 +61,15 @@ namespace ascii_to_numbers
             new[] {'|', ' '}
         };
 
-        private static int[] buildDigitCodes(string[] patterns)
+        public static int[] BuildDigitCodes(string[] patterns)
         {
             var codes = new int[10];
 
             for (int digit = 0; digit < 10; digit++)
             {
-                var pattern = AsciiPattern.New(_validChars);
+                var pattern = AsciiPattern.New(ValidChars);
 
-                foreach (var ch in _digitPatterns[digit])
+                foreach (var ch in DigitPatterns[digit])
                 {
                     pattern.PushChar(ch);
                 }
@@ -83,11 +83,11 @@ namespace ascii_to_numbers
 
         private static void ConvertFile(string rootFolder, string inFile, string outFile)
         {
-            var digitCodes = buildDigitCodes(_digitPatterns);
+            var digitCodes = BuildDigitCodes(DigitPatterns);
 
             var config = new AsciiNumber.Config {
-                NoOfDigits = 8,
-                ValidChars = _validChars,
+                NoOfDigits = 9,
+                ValidChars = ValidChars,
                 DigitCodes = digitCodes
             };
 
@@ -106,17 +106,17 @@ namespace ascii_to_numbers
 
             for (int next = 0; next < lineCount; )
             {
-                var ascii = AsciiNumber.New(config, next);   // number of 8 digits at next line no 
+                var ascii = AsciiNumber.New(config, next);   // number of 9 digits at next line no 
 
                 ascii.PushLine(lines[next++]);          // fragment of three line
                 ascii.PushLine(lines[next++]);
                 ascii.PushLine(lines[next++]);
                 next++;                                 // skip empty line
 
-                var number = ascii.ParsedNumber;
+                var number = ascii.Number;
 
                 if (ascii.IsValid == false)
-                    number += " INVALID";
+                    number += " ILLEGAL";
 
                 numbers.Add(number);
             }

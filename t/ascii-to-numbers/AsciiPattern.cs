@@ -3,14 +3,14 @@ using System.Linq;
 
 namespace ascii_to_numbers
 {
-    interface IAsiiPattern
+    interface IAsciiPattern
     {
         bool IsValid { get; }
         int Code { get; }
         void PushChar(char ch);
     }
 
-    class AsciiPattern : IAsiiPattern
+    class AsciiPattern : IAsciiPattern
     {
         private readonly char[][] _validChars;
 
@@ -20,7 +20,7 @@ namespace ascii_to_numbers
 
         #region construction
 
-        public static IAsiiPattern New(char[][] validChars)
+        public static IAsciiPattern New(char[][] validChars)
         {
             return
                 new AsciiPattern(validChars);
@@ -59,11 +59,11 @@ namespace ascii_to_numbers
 
         #region interface
 
-        bool IAsiiPattern.IsValid => !_hasWrongChars;
+        bool IAsciiPattern.IsValid => !_hasWrongChars;
 
-        int IAsiiPattern.Code => _code;
+        int IAsciiPattern.Code => _code;
 
-        void IAsiiPattern.PushChar(char ch)
+        void IAsciiPattern.PushChar(char ch)
         {
             validateChar(ch);
 
