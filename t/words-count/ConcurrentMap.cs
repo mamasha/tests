@@ -6,6 +6,7 @@ namespace words_count
     {
         Value putIfAbsent(Key key, Value value);
         Key[] getKeys();
+        Value this[Key key] { get; }
     }
 
     class ConcurrentMap<Key, Value> : IConcurrentMap<Key, Value>
@@ -53,6 +54,17 @@ namespace words_count
                 _keys.ToArray();
         }
 
+        Value IConcurrentMap<Key, Value>.this[Key key]
+        {
+            get
+            {
+                if (_map.TryGetValue(key, out var value))
+                    return value;
+
+                return default(Value);
+            }
+        }
+
         #endregion
     }
 
@@ -71,5 +83,6 @@ namespace words_count
 
         Value IConcurrentMap<Key, Value>.putIfAbsent(Key key, Value value) { lock (_mutex) return _.putIfAbsent(key, value); }
         Key[] IConcurrentMap<Key, Value>.getKeys() { lock(_mutex) return _.getKeys(); }
+        Value IConcurrentMap<Key, Value>.this[Key key] { get { lock (_mutex) return _[key]; } }
     }
 }

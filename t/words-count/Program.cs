@@ -1,19 +1,28 @@
 ﻿using System;
+using System.IO;
 
 namespace words_count
 {
     class Program
     {
-        private static void mainImpl(string[] args)
+        private static void mainImpl()
         {
-            Console.WriteLine("words-count");
+            var rootFolder = Path.GetFullPath(
+                Directory.GetCurrentDirectory() + "/../..");
+
+            Console.WriteLine($"words-count: root folder is '{rootFolder}'");
+
+            var wc = WordsCounter.New(rootFolder);
+            wc.load("file1.txt", "file2.txt", "file3.txt");
+
+            wc.displayStatus();
         }
 
         static void Main(string[] args)
         {
             try
             {
-                mainImpl(args);
+                mainImpl();
             }
             catch (Exception ex)
             {
