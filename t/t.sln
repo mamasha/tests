@@ -6,6 +6,7 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "q2", "q2", "{B6831243-13E9-48BD-8720-7911141E690E}"
 	ProjectSection(SolutionItems) = preProject
 		q2\MyClass.java = q2\MyClass.java
+		readme.md = readme.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ascii-to-numbers", "ascii-to-numbers\ascii-to-numbers.csproj", "{B1ECEC1B-9F96-47E6-AC36-58019EAB52C9}"
