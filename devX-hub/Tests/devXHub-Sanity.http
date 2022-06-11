@@ -1,0 +1,11 @@
+### Send POC request
+POST http://localhost:5050/api/devx-hub/poc
+Content-Type: application/json
+devX-session-id: 98re89refere454
+
+{
+    "sandboxId": "sandbox-112233",
+    "terraformName": "quali.tf",
+    "delayOnStart": 5,
+    "delayOnMessage": 2
+}
