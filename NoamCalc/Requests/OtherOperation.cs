@@ -1,0 +1,3 @@
+﻿class OtherOperation : CalculationRequest
+{ }
+
