@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "max-sum-in-line": {
+      "commandName": "Project",
+      "commandLineArgs": "lines-of-numbers.txt"
+    }
+  }
+}
