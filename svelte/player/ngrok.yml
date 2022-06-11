@@ -1,0 +1,8 @@
+authtoken: 1lyI13LsK0ksyHDhmVxV000UoXg_825uSGi6SnxjVU19q1aFv
+tunnels:
+  dev:
+    addr: 5000
+    proto: http
+  live:
+    addr: 35729
+    proto: http
