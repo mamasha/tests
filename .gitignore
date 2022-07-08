@@ -1,0 +1,4 @@
+# xxx/ - means any folder or sub-folder
+# xxx/* - means any file in xxx foder but not in sub-folders
+
+.vs/
