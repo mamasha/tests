@@ -1,0 +1,72 @@
+### new circle
+POST http://localhost:5002/board/1/shapes/insert
+Content-Type: application/json
+
+{
+    "circle": {
+        "center": {
+            "x": 10,
+            "y": 20
+        },
+        "radius": 10
+    }
+}
+
+
+### new square
+POST http://localhost:5002/board/1/shapes/insert
+Content-Type: application/json
+
+{
+    "square": {
+        "leftUp": {
+            "x": 10,
+            "y": 20
+        },
+        "edge": 10
+    }
+}
+
+### update circle
+POST http://localhost:5002/board/1/shapes/update/001
+Content-Type: application/json
+
+{
+    "circle": {
+        "center": {
+            "x": 100,
+            "y": 200
+        },
+        "radius": 10
+    }
+}
+
+
+### update square
+POST http://localhost:5002/board/1/shapes/update/002
+Content-Type: application/json
+
+{
+    "square": {
+        "leftUp": {
+            "x": 100,
+            "y": 200
+        },
+        "edge": 10
+    }
+}
+
+
+### undo
+POST http://localhost:5002/board/1/undo
+Content-Type: application/json
+
+
+### remove circle
+POST http://localhost:5002/board/1/shapes/remove/001
+Content-Type: application/json
+
+
+### remove square
+POST http://localhost:5002/board/1/shapes/remove/002
+Content-Type: application/json
