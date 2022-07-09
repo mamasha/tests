@@ -15,12 +15,14 @@ public class RateLimiter : IRateLimiter
 
     private readonly ILogger _logger;
     private readonly Config _config;
+    private readonly IStringHasher _hasher;
     private readonly ConcurrentDictionary<string, Ring<DateTime>> _rings;
 
-    public RateLimiter(ILogger<RateLimiter> logger, Config config)
+    public RateLimiter(ILogger<RateLimiter> logger, Config config, IStringHasher hasher)
     {
         _logger = logger;
         _config = config;
+        _hasher = hasher;
         _rings = new();
     }
 
@@ -41,7 +43,8 @@ public class RateLimiter : IRateLimiter
 
     bool IRateLimiter.LimitUrl(DateTime now, string url)
     {
-        var ring = _rings.GetOrAdd(url, _ => new(_config.Threshold));
+        var hash = _hasher.GetHashOf(url);
+        var ring = _rings.GetOrAdd(hash, _ => new(_config.Threshold));
 
         bool blocked;
         int count;
@@ -51,7 +54,7 @@ public class RateLimiter : IRateLimiter
             (count, blocked) = LimitByRing(now, ring);
         }
 
-        _logger.LogInformation("URL {url} is reported, count={count}, {blocked}", url, count, blocked ? "blocked" : "not blocked");
+        _logger.LogInformation("URL {url} is reported ({hash}), count={count}, {blocked}", url, hash, count, blocked ? "blocked" : "not blocked");
 
         return blocked;
     }

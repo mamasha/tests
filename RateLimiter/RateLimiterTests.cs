@@ -16,10 +16,12 @@ static class RateLimiterTests
 
     public static void RunUnitTests()
     {
-        IRateLimiter limiter = new RateLimiter(new NullLogger<RateLimiter>(), new RateLimiter.Config { 
+        var config = new RateLimiter.Config {
             Threshold = 3,
             Ttl = TimeSpan.FromMilliseconds(1000)
-        });
+        };
+
+        IRateLimiter limiter = new RateLimiter(new NullLogger<RateLimiter>(), config, new StringHasher());
 
         var now = DateTime.UtcNow;
 

@@ -16,6 +16,7 @@ var config = new RateLimiter.Config {
 
 builder.Services.AddSingleton<RateLimiter.Config>(config);
 builder.Services.AddSingleton<IRateLimiter, RateLimiter>();
+builder.Services.AddTransient<IStringHasher, StringHasher>();
 
 var app = builder.Build();
 
