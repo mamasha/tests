@@ -1,7 +1,16 @@
+###
 POST http://localhost:5297/report
 Content-Type: application/json
 
 {
-    "url": "test.me/some-url"
+    "url": "/test.me/some-url"
+}
+
+### 
+POST http://localhost:5297/report
+Content-Type: application/json
+
+{
+    "url": "/test.me/some-other"
 }
 
