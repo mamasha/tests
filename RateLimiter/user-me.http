@@ -1,0 +1,7 @@
+POST http://localhost:5297/report
+Content-Type: application/json
+
+{
+    "url": "test.me/some-url"
+}
+
