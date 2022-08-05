@@ -1,7 +1,7 @@
 ﻿static class Helpers
 {
     public static int[] ToArray(this Range range) =>
-        Enumerable.Range(range.Start.Value, range.End.Value).ToArray();
+        Enumerable.Range(range.Start.Value, range.End.Value ).ToArray();
 
     public static IEnumerable<int> Exclusive(this Range range)
     {
@@ -42,7 +42,7 @@
         return true;
     }
 
-        public static int EverHash(this string str)
+    public static int EverHash(this string str)
     {
         unchecked
         {
