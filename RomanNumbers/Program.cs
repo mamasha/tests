@@ -1,0 +1,2 @@
+﻿
+WordValidatorTests.RunAll();

@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32328.378
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stampli", "Stampli.csproj", "{D5E3B980-9895-4EDE-BF70-E25DA221C630}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D5E3B980-9895-4EDE-BF70-E25DA221C630}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5E3B980-9895-4EDE-BF70-E25DA221C630}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5E3B980-9895-4EDE-BF70-E25DA221C630}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5E3B980-9895-4EDE-BF70-E25DA221C630}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A5A32E84-A7D1-48A5-8C20-857B0271CC7D}
+	EndGlobalSection
+EndGlobal
